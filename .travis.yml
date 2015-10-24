@@ -1,0 +1,40 @@
+sudo: false
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.6
+      - kalakris-cmake
+    packages:
+      - cmake
+      - gcc-4.9
+      - g++-4.9
+      - clang-3.6
+      - valgrind
+
+env:
+  - CMAKE_BUILD_TYPE=Debug
+  - CMAKE_BUILD_TYPE=Release
+
+install:
+  - if [ "$CC" = "clang" ]; then export CC="clang-3.6"; fi
+  - if [ "$CC" = "gcc" ]; then export CC="gcc-4.9"; fi
+  - env | sort
+
+before_script:
+  - mkdir build && cd $_
+  - cmake -Dfssim_tests=ON ..
+  - make
+
+script:
+  - make test
+
+notifications:
+  email: false
+
