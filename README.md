@@ -4,7 +4,6 @@
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Inner Workings](#inner-workings)
 - [Cli](#cli)
@@ -25,7 +24,7 @@ Simulated files or directories contain:
 
 The filesystem represts a unique partition of a disk without the booting related stuff that a normal partition would have. It supports up to 100MB of both regular files and metadata. Its blocks are of 4KB each.
 
-It's storage is done using FAT, having the root at `/` and using `/` as the hierachy separator character. Free storage management is implemented using bitmap.
+It's storage is done using FAT, having the root at `/` and using `/` as the hierachy separator character. Free storage management is implemented using bitmap. Each directory is a list with an entry for each file inside the directory.
 
 
 ## Cli
@@ -45,19 +44,23 @@ COMMANDS:
   cp <src> <dest>       copies a file from the real system to the
                         simulated filesystem (dest).
 
-  mkdir <dir>
+  mkdir <dir>           creates a directory named <dir>
 
-  rmdir <dir>
+  rmdir <dir>           removes the directory <dir> along with the
+                        files that were there (ir any)
 
-  cat <fname>
+  cat <fname>           shows (stdout) the contents of <fname>
 
-  touch <fname>
+  touch <fname>         creates a file <fname>. If it already exists,
+                        updates the file's last access time.
 
-  rm <fname>
+  rm <fname>            remover a given <fname>
 
-  ls <dir>
+  ls <dir>              lists the files and directories 'below'
+                        <dir>, showing $name, $size, $last_mod for
+                        files and an indicator for directories.
   
-  find <dir> <fname>
+  find <dir> <fname>    
 
   df
 

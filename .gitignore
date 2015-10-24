@@ -1,4 +1,5 @@
 *.pyc
+.ycm_extra_conf.py
 
 callgrind.*
 cachegrind.*
