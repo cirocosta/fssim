@@ -26,6 +26,28 @@ The filesystem represts a unique partition of a disk without the booting related
 
 It's storage is done using FAT, having the root at `/` and using `/` as the hierachy separator character. Free storage management is implemented using bitmap. Each directory is a list with an entry for each file inside the directory.
 
+```
+filepath
+  |
+  |      (dir struct)                     (f_index struct)
+  |     .-----------.                    .----------------.
+  '---> |           |                    |                |
+        |           |                    +----------------+
+        |           |              .---> |  &data_blocks  |
+        +-----------+              |     +----------------+
+        |    FILE   |---(file_no)--'     |                |
+        +-----------+                    |                |
+        |___________|                    |                |
+                                         |________________|
+
+
+    |  path resolution  |             |   blocks reading    |
+    '-------------------'             '---------------------'
+      happens at open()                   
+           time
+  
+``` 
+
 
 ## Cli
 

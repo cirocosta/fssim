@@ -2,37 +2,40 @@
 #define FSSIM__CLI_H
 
 #include "fssim/common.h"
+#include "fssim/simulator.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
-typedef int (*fs_cli_command)(char** argument, unsigned argc);
+typedef int (*fs_cli_command)(char** argument, unsigned argc,
+                              fs_simulator_t* sim);
 typedef struct fs_cli_command_t {
   char* key;
   fs_cli_command command;
 } fs_cli_command_t;
 
-int fs_cli_command_mount(char** argv, unsigned argc);
-int fs_cli_command_cp(char** argv, unsigned argc);
-int fs_cli_command_mkdir(char** argv, unsigned argc);
-int fs_cli_command_rmdir(char** argv, unsigned argc);
-int fs_cli_command_cat(char** argv, unsigned argc);
-int fs_cli_command_touch(char** argv, unsigned argc);
-int fs_cli_command_rm(char** argv, unsigned argc);
-int fs_cli_command_ls(char** argv, unsigned argc);
-int fs_cli_command_find(char** argv, unsigned argc);
-int fs_cli_command_df(char** argv, unsigned argc);
-int fs_cli_command_unmount(char** argv, unsigned argc);
-int fs_cli_command_help(char** argv, unsigned argc);
-int fs_cli_command_sai(char** argv, unsigned argc);
+int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_cp(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_mkdir(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_rmdir(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_cat(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_touch(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_rm(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_ls(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_find(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_df(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_unmount(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_help(char** argv, unsigned argc, fs_simulator_t* sim);
+int fs_cli_command_sai(char** argv, unsigned argc, fs_simulator_t* sim);
 
 static const char* FS_CLI_PROMPT = "[ep3] ";
 
 #define FS_CLI_COMMANDS_SIZE 13
 
-const static char* FS_CLI_WELCOME = "\n"
-                                    "Welcome to *fssim*! The Filesystem Simulator\n"
-                                    "If you need help, type `help`.\n\n";
+const static char* FS_CLI_WELCOME =
+    "\n"
+    "Welcome to *fssim*! The Filesystem Simulator\n"
+    "If you need help, type `help`.\n\n";
 
 const static fs_cli_command_t FS_CLI_COMMANDS[] = {
   { "cat", &fs_cli_command_cat },

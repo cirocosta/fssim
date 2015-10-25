@@ -6,6 +6,7 @@ void fs_cli_run()
   char* input = NULL;
   char** argv = NULL;
   fs_cli_command cmd = NULL;
+  fs_simulator_t* sim = fs_simulator_create();
 
   rl_bind_key('\t', rl_complete);
   fprintf(stderr, "%s", FS_CLI_WELCOME);
@@ -27,7 +28,7 @@ void fs_cli_run()
     if (cmd != NULL) {
       while (argv[argc]) // !!
         argc++;
-      cmd(argv, argc);
+      cmd(argv, argc, sim);
     } else {
       fprintf(stderr, "Couldn't find command %s\n", argv[0]);
     }
@@ -37,6 +38,8 @@ void fs_cli_run()
       free(argv[argc]);
     free(argv);
   }
+
+  fs_simulator_destroy(sim);
 }
 
 fs_cli_command fs_cli_search_command(const char* cmd)
@@ -60,24 +63,80 @@ fs_cli_command fs_cli_search_command(const char* cmd)
   return NULL;
 }
 
-int fs_cli_command_mount(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_cp(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_mkdir(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_rmdir(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_cat(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_touch(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_rm(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_ls(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_find(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_df(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_unmount(char** argv, unsigned argc) { return 0; }
-int fs_cli_command_help(char** argv, unsigned argc)
+int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  if (argc != 2) {
+    fprintf(stderr, "ERROR: Wrong arguments specification\n"
+                    "Must be: mount <fname>\n");
+    return 1;
+  }
+
+  if (!fexists(argv[1])) {
+    sim->fs = fs_filesystem_create(argv[1]);
+  } else {
+    sim->fs = fs_filesystem_load(argv[1]);
+  }
+
+  return 0;
+}
+
+int fs_cli_command_cp(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_mkdir(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_rmdir(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_cat(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_touch(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_rm(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_ls(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_find(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_df(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_unmount(char** argv, unsigned argc, fs_simulator_t* sim)
+{
+  return 0;
+}
+
+int fs_cli_command_help(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   fprintf(stderr, "%s", FS_CLI_HELP);
   return 0;
 }
 
-int fs_cli_command_sai(char** argv, unsigned argc)
+int fs_cli_command_sai(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   fprintf(stderr, "%s\n", "Bye Bye!");
   exit(0);
