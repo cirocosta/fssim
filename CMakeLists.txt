@@ -1,6 +1,7 @@
 # setup
 cmake_minimum_required(VERSION 2.8)
 option(fssim_tests "Include Tests." ON)
+option(CMAKE_BUILD_TYPE "Debug")
 
 set(PROJECT_NAME fssim)
 project(${PROJECT_NAME} C)

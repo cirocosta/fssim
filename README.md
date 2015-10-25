@@ -60,15 +60,18 @@ COMMANDS:
                         <dir>, showing $name, $size, $last_mod for
                         files and an indicator for directories.
   
-  find <dir> <fname>    
+  find <dir> <fname>    taking <dir> as root, recursively searches
+                        for a file named <fname>
 
-  df
+  df                    shows filesystem info, including number of
+                        diferectories, files, freespace and wasted
+                        space
 
-  unmount
+  unmount               unmounts the current filesystem
 
-  help
+  help                  shows this message
 
-  sai
+  sai                   exits the simulator
 
 
 NOTES:
