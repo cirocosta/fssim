@@ -26,10 +26,11 @@ $ cmake ..
 $ ./fssim
 ```
 
-If you wish to test the project as well you might be interested on having the verbose output when a test fails. To enable such feature, add the following variable to your environment:
+If you wish to test the project as well you might be interested on having the verbose output when a test fails. To enable such feature, add the following variable to your environment and run `cmake` w/ `Debug` set up:
 
 ```
 $ export CTEST_OUTPUT_ON_FAILURE=1
+$ cmake -DCMAKE_BUILD_TYPE=Debug ..
 ```
 
 ## Inner Workings

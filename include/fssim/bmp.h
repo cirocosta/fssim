@@ -12,6 +12,7 @@
 
 typedef struct fs_bmp_t {
   size_t size;
+  size_t num_blocks;
   uint8_t* mapping;
 } fs_bmp_t;
 
