@@ -38,12 +38,12 @@ void test2()
   SET_LBIT(bmp->mapping[0], 7);
   ASSERT(bmp->mapping[0] == 129, "");
 
-  ASSERT(fs_bmp_IS_ON_(bmp, 0), "");
-  ASSERT(fs_bmp_IS_ON_(bmp, 7), "");
+  ASSERT(FS_BMP_IS_ON_(bmp, 0), "");
+  ASSERT(FS_BMP_IS_ON_(bmp, 7), "");
 
   SET_LBIT(bmp->mapping[1], 7);
   LOGERR("bmp->mapping[1] = %d", bmp->mapping[1]);
-  ASSERT(fs_bmp_IS_ON_(bmp, 15), "");
+  ASSERT(FS_BMP_IS_ON_(bmp, 15), "");
 
   fs_bmp_destroy(bmp);
 }
@@ -53,9 +53,9 @@ void test3()
   size_t blocks = 16;
   fs_bmp_t* bmp = fs_bmp_create(blocks);
 
-  fs_bmp_FLIP_(bmp, 0);
-  fs_bmp_FLIP_(bmp, 5);
-  fs_bmp_FLIP_(bmp, 15);
+  FS_BMP_FLIP_(bmp, 0);
+  FS_BMP_FLIP_(bmp, 5);
+  FS_BMP_FLIP_(bmp, 15);
 
   ASSERT(CHECK_LBIT(bmp->mapping[0], 0), "");
   ASSERT(CHECK_LBIT(bmp->mapping[0], 5), "");
