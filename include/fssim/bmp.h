@@ -22,4 +22,7 @@ void fs_bmp_destroy(fs_bmp_t* bmp);
 void fs_bmp_free(fs_bmp_t* bmp, uint32_t block);
 uint32_t fs_bmp_alloc(fs_bmp_t* bmp);
 
+int fs_bmp_IS_ON_(fs_bmp_t* bmp, int pos);
+void fs_bmp_FLIP_(fs_bmp_t* bmp, int pos);
+
 #endif

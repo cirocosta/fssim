@@ -1,6 +1,17 @@
 #ifndef FSSIM_COMMON_H
 #define FSSIM_COMMON_H
 
+#define CHECK_RBIT(__var, __pos) ((__var) & (1 << (__pos)))
+#define CHECK_LBIT(__var, __pos) ((__var) & (128 >> (__pos)))
+#define SET_LBIT(__var, __pos)                                                 \
+  do {                                                                         \
+    __var ^= (128 >> __pos);                                                   \
+  } while (0);
+#define SET_RBIT(__var, __pos)                                                 \
+  do {                                                                         \
+    __var ^= (1 << __pos);                                                     \
+  } while (0);
+
 #include "fssim/constants.h"
 
 #include <stdlib.h>
@@ -88,4 +99,3 @@ inline static int fexists(const char* fname)
 }
 
 #endif // ! FSSIM_COMMON_H
-
