@@ -1,11 +1,12 @@
+#include "fssim/bmp.h"
 #include "fssim/common.h"
-#include "fssim/fat.h"
 
 void test1()
 {
-  fs_fat_t* fat = fs_fat_create(10);
+  size_t blocks = 1024;
+  fs_bmp_t* bmp = fs_bmp_create(blocks);
 
-  fs_fat_destroy(fat);
+  fs_bmp_destroy(bmp);
 }
 
 int main(int argc, char *argv[])
@@ -14,3 +15,4 @@ int main(int argc, char *argv[])
   
   return 0;
 }
+

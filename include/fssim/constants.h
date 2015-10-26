@@ -2,6 +2,7 @@
 #define FSSIM__CONSTANTS_H 
 
 #include "fssim/common.h"
+#include <stdint.h>
 
 #define FS_KILOBYTE 1024
 #define FS_MEGABYTE 1024*FS_KILOBYTE

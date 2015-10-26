@@ -29,6 +29,7 @@ SET(${PROJECT_NAME}_LIBRARIES ${LIBRARIES}
 
 # test
 if (${fssim_tests})
+  enable_testing()
   add_subdirectory(tests/)
 endif()
 

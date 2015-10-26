@@ -25,6 +25,7 @@ env:
 install:
   - if [ "$CC" = "clang" ]; then export CC="clang-3.6"; fi
   - if [ "$CC" = "gcc" ]; then export CC="gcc-4.9"; fi
+  - export CTEST_OUTPUT_ON_FAILURE=1
   - env | sort
 
 before_script:

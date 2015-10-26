@@ -72,9 +72,9 @@ int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim)
   }
 
   if (!fexists(argv[1])) {
-    sim->fs = fs_filesystem_create(argv[1]);
+    /* sim->fs = fs_filesystem_create(argv[1]); */
   } else {
-    sim->fs = fs_filesystem_load(argv[1]);
+    /* sim->fs = fs_filesystem_load(argv[1]); */
   }
 
   return 0;

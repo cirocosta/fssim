@@ -5,26 +5,44 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
+- [Running](#running)
 - [Inner Workings](#inner-workings)
+  - [FS](#fs)
+  - [Flow](#flow)
+  - [File Attributes](#file-attributes)
 - [Cli](#cli)
 - [LICENSE](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## Running
+
+This project depends on `cmake` for generating Make files and asserting the required libs (currently depends on [gnu readline](https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html) only).
+
+```sh
+$ mkdir build && cd $_
+$ cmake ..
+$ ./fssim
+```
+
+If you wish to test the project as well you might be interested on having the verbose output when a test fails. To enable such feature, add the following variable to your environment:
+
+```
+$ export CTEST_OUTPUT_ON_FAILURE=1
+```
+
 ## Inner Workings
 
-Simulated files or directories contain:
--   name
--   size in bytes (except for directories)
--   creation time
--   modif time
--   last access time
--   data
+### FS
 
+The filesystem represents a unique partition of a disk without the booting related stuff that a normal partition (in a normal disk) would have. It supports up to 100MB of both regular files and metadata. Its blocks are of 4KB each (being the block the granularity).
 
-The filesystem represts a unique partition of a disk without the booting related stuff that a normal partition would have. It supports up to 100MB of both regular files and metadata. Its blocks are of 4KB each.
+It's storage is done using FAT (File Allocation Table), having the root at `/` and using `/` as the hierarchy separator character. Free storage management is implemented using bitmapping. 
 
-It's storage is done using FAT, having the root at `/` and using `/` as the hierachy separator character. Free storage management is implemented using bitmap. Each directory is a list with an entry for each file inside the directory.
+Each directory is a list with an entry for each file inside the directory.
+
+### Flow
 
 ```
 filepath
@@ -48,6 +66,21 @@ filepath
   
 ``` 
 
+- `touch`: creates a file with no data, setting some attributes and adding a reference to it in the containing directory.
+- `rm`: frees space, removes entry in the directory as well as fat
+- `open`: 
+
+### File Attributes
+
+Simulated files or directories (which are files) contain:
+-   name
+-   size in bytes (except for directories)
+-   creation time
+-   modif time
+-   last access time
+-   data
+
+These attributes are stuck with file entries in directory files.
 
 ## Cli
 
