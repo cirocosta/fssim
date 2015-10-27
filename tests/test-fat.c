@@ -28,10 +28,39 @@ void test2()
   fs_fat_destroy(fat);
 }
 
+void test3()
+{
+  fs_fat_t* fat = fs_fat_create(10);
+
+  uint32_t file_entry0 = fs_fat_addfile(fat);
+  uint32_t file_entry1 = fs_fat_addfile(fat);
+
+  // file0 :  0->2->NIL 
+  // file1 :  1->NIL 
+  fs_fat_addblock(fat, file_entry0);
+  ASSERT(fat->blocks[file_entry0] == 2, "");
+  ASSERT(fat->blocks[2] == 2, "");
+
+  // file0 :  0->2->NIL 
+  // file1 :  1->3->NIL 
+  fs_fat_addblock(fat, file_entry1);
+  ASSERT(fat->blocks[file_entry1] == 3, "");
+  ASSERT(fat->blocks[3] == 3, "");
+
+  // file0 :  0->2->NIL 
+  // file1 :  1->3->4->NIL 
+  fs_fat_addblock(fat, file_entry1);
+  ASSERT(fat->blocks[3] == 4, "");
+  ASSERT(fat->blocks[4] == 4, "");
+
+  fs_fat_destroy(fat);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
   TEST(test2, "file add");
+  TEST(test3, "add block");
 
   return 0;
 }

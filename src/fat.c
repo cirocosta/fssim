@@ -31,6 +31,19 @@ uint32_t fs_fat_addfile(fs_fat_t* fat)
   return free_block;
 }
 
+uint32_t fs_fat_addblock(fs_fat_t* fat, uint32_t file_pos)
+{
+  uint32_t free_block = fs_bmp_alloc(fat->bmp);
+
+  while (fat->blocks[file_pos] != file_pos)
+    file_pos = fat->blocks[file_pos];
+
+  fat->blocks[file_pos] = free_block;
+  fat->blocks[free_block] = free_block;
+
+  return free_block;
+
+}
+
 
 /* void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos); */
-/* uint32_t fs_file_addblock(fs_fat_t* fat, uint32_t file_pos); */

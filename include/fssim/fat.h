@@ -30,6 +30,6 @@ void fs_fat_destroy(fs_fat_t* fat);
 
 void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos);
 uint32_t fs_fat_addfile(fs_fat_t* fat);
-uint32_t fs_file_addblock(fs_fat_t* fat, uint32_t file_pos);
+uint32_t fs_fat_addblock(fs_fat_t* fat, uint32_t file_pos);
 
 #endif
