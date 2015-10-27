@@ -10,7 +10,7 @@ fs_fat_t* fs_fat_create(size_t length)
   PASSERT(fat->blocks, FS_ERR_MALLOC);
   fat->bmp = fs_bmp_create(fat->length);
 
-  while (length --> 0)
+  while (length-- > 0)
     fat->blocks[length] = length;
 
   return fat;
@@ -42,8 +42,21 @@ uint32_t fs_fat_addblock(fs_fat_t* fat, uint32_t file_pos)
   fat->blocks[free_block] = free_block;
 
   return free_block;
-
 }
 
+void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos)
+{
+  uint32_t tmp_pos;
 
-/* void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos); */
+  while (1) {
+    tmp_pos = file_pos;
+    fs_bmp_free(fat->bmp, file_pos);
+    file_pos = fat->blocks[file_pos]; 
+
+    if (fat->blocks[tmp_pos] == tmp_pos)
+      return;
+
+    fat->blocks[tmp_pos] = tmp_pos;   
+  }
+
+}
