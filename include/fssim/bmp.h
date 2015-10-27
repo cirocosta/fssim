@@ -3,21 +3,6 @@
 
 #include "fssim/common.h"
 
-#define FS_BMP_IS_ON_(__bmp, __pos)                                            \
-  (CHECK_LBIT(__bmp->mapping[(__pos / 8)], (__pos % 8)))
-
-#define FS_BMP_FLIP_(__bmp, __pos)                                             \
-  do {                                                                         \
-    SET_LBIT(__bmp->mapping[(__pos / 8)], (__pos % 8));                        \
-  } while (0);
-
-/**
- * BITMAP
- *
- * bit(0) --> free
- * bit(1) --> occupied
- */
-
 typedef struct fs_bmp_t {
   size_t size;
   size_t num_blocks;
@@ -25,17 +10,34 @@ typedef struct fs_bmp_t {
   uint8_t* mapping;
 } fs_bmp_t;
 
+/**
+ * Creates a bitmap that maps <size> blocks.
+ */
 fs_bmp_t* fs_bmp_create(size_t size);
+
+/**
+ * Destroys the bitmap
+ */
 void fs_bmp_destroy(fs_bmp_t* bmp);
 
 /**
- * Frees the given space
+ * Frees the given space.
  */
 void fs_bmp_free(fs_bmp_t* bmp, uint32_t block);
 
 /**
- * Searches for a free space (next fit)
+ * Searches for free space  w/ a next-fit
+ * strategy, sets the bit (now used) and returns
+ * the block ref
  */
 uint32_t fs_bmp_alloc(fs_bmp_t* bmp);
+
+#define FS_BMP_IS_ON_(__bmp, __pos)                                            \
+  (CHECK_LBIT(__bmp->mapping[(__pos / 8)], (__pos % 8)))
+
+#define FS_BMP_FLIP_(__bmp, __pos)                                             \
+  do {                                                                         \
+    SET_LBIT(__bmp->mapping[(__pos / 8)], (__pos % 8));                        \
+  } while (0);
 
 #endif
