@@ -2,7 +2,6 @@ sudo: false
 language: c
 
 compiler:
-  - gcc
   - clang
 
 addons:
@@ -30,7 +29,7 @@ install:
 
 before_script:
   - mkdir build && cd $_
-  - cmake -Dfssim_tests=ON ..
+  - cmake ..
   - make
 
 script:
