@@ -7,7 +7,7 @@ void test1()
 
   ASSERT(file->attrs.is_directory == 1, "");
   ASSERT(!strcmp(file->attrs.fname, "/"), "");
-  ASSERT(file->parent == NULL, "");
+  ASSERT(file->parent == file, "");
   // TODO maybe this should actually be an empty linked list...
   ASSERT(file->children == NULL, "");
 
