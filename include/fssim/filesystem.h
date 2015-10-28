@@ -3,14 +3,27 @@
 
 #include "fssim/common.h"
 #include "fssim/fat.h"
+#include "fssim/file.h"
+#include "fssim/file_utils.h"
+
+/* typedef struct fs_filesystem_superblock_t { */
+/*   qtd_dirs; */
+/*   qtd_arquivos; */
+/*   wasted_space; */
+/* } fs_filesystem_superblock_t; */
 
 typedef struct fs_filesystem_t {
+  fs_fat_t* fat;
+  fs_file_t* root;
+  fs_file_t* cwd;
+  FILE* file;
 } fs_filesystem_t;
 
-#if 0
+fs_filesystem_t* fs_filesystem_create(size_t blocks);
+void fs_filesystem_destroy(fs_filesystem_t* fs);
 
-fs_filesystem_t* fs_filesystem_load(char* fname);
-fs_filesystem_t* fs_filesystem_create(char* fname);
-#endif
+void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname);
+void fs_filesystem_unmount(fs_filesystem_t* fs);
+
 
 #endif

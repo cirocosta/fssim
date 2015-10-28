@@ -2,6 +2,7 @@
 #define FSSIM__CLI_H
 
 #include "fssim/common.h"
+#include "fssim/file_utils.h"
 #include "fssim/simulator.h"
 
 #include <readline/readline.h>

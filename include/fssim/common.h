@@ -91,11 +91,4 @@
   } while (0)
 #endif
 
-inline static int fexists(const char* fname)
-{
-  if (!access(fname, F_OK))
-    return 1;
-  return 0;
-}
-
 #endif // ! FSSIM_COMMON_H

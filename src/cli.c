@@ -71,11 +71,8 @@ int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim)
     return 1;
   }
 
-  if (!fexists(argv[1])) {
-    /* sim->fs = fs_filesystem_create(argv[1]); */
-  } else {
-    /* sim->fs = fs_filesystem_load(argv[1]); */
-  }
+  sim->fs = fs_filesystem_create(FS_BLOCKS_NUM);
+  /* fs_filesystem_mount(sim->fs, argv[1]); */
 
   return 0;
 }
@@ -127,6 +124,15 @@ int fs_cli_command_df(char** argv, unsigned argc, fs_simulator_t* sim)
 
 int fs_cli_command_unmount(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  if (!sim->fs) {
+    fprintf(stderr, "%s\n", "Can't perform `unmount` without a FS mounted;");
+    return 0;
+  }
+  
+  /* fs_filesystem_unmount(sim->fs); */
+  fs_filesystem_destroy(sim->fs);
+  sim->fs = NULL;
+
   return 0;
 }
 
