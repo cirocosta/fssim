@@ -15,6 +15,8 @@
 
 #define FS_ERR_MALLOC "Couldn't allocate memory"
 
+#define FS_DATE_FORMAT "%Y-%m-%d %H:%M"
+
 typedef enum fs_file_type {
   FS_FILE_DIRECTORY = 1,
   FS_FILE_REGULAR

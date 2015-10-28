@@ -5,23 +5,7 @@
 
 inline static int fs_utils_fexists(const char* fname)
 {
-  if (!access(fname, F_OK))
-    return 1;
-  return 0;
-}
-
-inline static int fs_utils_fsize(FILE* file)
-{
-  int size;
-  int last_pos;
-
-  PASSERT(~fseek(file, 0, SEEK_SET), "");
-  last_pos = ftell(file);
-  PASSERT(~fseek(file, 0, SEEK_END), "");
-  size = ftell(file);
-  PASSERT(~fseek(file, last_pos, SEEK_SET), "");
-
-  return size;
+  return !access(fname, F_OK) ? 1 : 0;
 }
 
 inline static void fs_utils_fdelete(const char* fname)
@@ -30,5 +14,8 @@ inline static void fs_utils_fdelete(const char* fname)
     PASSERT(!unlink(fname), "fdelete:");
   }
 }
+
+int fs_utils_fsize(FILE* file);
+char** fs_utils_splitpath(const char* input, unsigned* size);
 
 #endif
