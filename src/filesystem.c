@@ -57,6 +57,11 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
   fs->cwd = fs->root;
 }
 
+void fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
+{
+  ASSERT(0, "must create LL first.");
+}
+
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n)
 {

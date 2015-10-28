@@ -50,11 +50,24 @@ void test3()
   free(buf);
 }
 
+void test4()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10); // 40 KB
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_touch(fs, "file.txt");
+
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
   TEST(test2, "mounting w/out previous mount");
-  TEST(test3, "listing");
+  TEST(test3, "ls - list empty root dir");
+  /* TEST(test4, "touch - creating a file in empty root"); */
 
   return 0;
 }

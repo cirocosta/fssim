@@ -26,6 +26,7 @@ void fs_filesystem_destroy(fs_filesystem_t* fs);
 void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname);
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n);
+void fs_filesystem_touch(fs_filesystem_t* fs, const char* fname);
 
 // TODO
 void fs_filesystem_unmount(fs_filesystem_t* fs);
