@@ -26,14 +26,19 @@ void fs_llist_destroy(fs_llist_t* list, fs_llist_destructor destructor)
   }
 }
 
-void fs_llist_append(fs_llist_t* a, fs_llist_t* b)
+fs_llist_t* fs_llist_append(fs_llist_t* a, fs_llist_t* b)
 {
   fs_llist_t* tmp = a;
 
-  while ((a = tmp->next) != NULL)
-    tmp = a;
+  while (1) {
+    if (tmp->next == NULL)
+      break;
+    tmp = tmp->next;
+  }
 
   tmp->next = b;
+
+  return a;
 }
 
 void fs_llist_remove(fs_llist_t* list) { list->next = NULL; }

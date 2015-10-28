@@ -25,5 +25,16 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
 void fs_file_destroy(fs_file_t* file)
 {
   // TODO traverse the tree and free whatever is bellow?
+  if (file->children) 
+    fs_llist_destroy(file->children, fs_file_destroy_llist);
   free(file);
+}
+
+void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
+{
+  if (!dir->children) {
+    dir->children = fs_llist_create(other);
+  } else {
+    dir->children = fs_llist_append(fs_llist_create(other), dir->children);
+  }
 }

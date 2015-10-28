@@ -3,6 +3,7 @@
 
 #include "fssim/common.h"
 #include "fssim/constants.h"
+#include "fssim/llist.h"
 
 typedef struct fs_file_attrs_t {
   char fname[FS_NAME_MAX];
@@ -13,18 +14,25 @@ typedef struct fs_file_attrs_t {
   unsigned char is_directory;
 } fs_file_attr_t;
 
-static const struct fs_file_attrs_t fs_zeroed_file_attrs = {0};
+static const struct fs_file_attrs_t fs_zeroed_file_attrs = { 0 };
 
 typedef struct fs_file_t {
   uint32_t entry;
   char* payload;
-  struct fs_file_t* children;
-  struct fs_file_t* parent;
   fs_file_attr_t attrs;
+
+  struct fs_file_t* parent;
+  fs_llist_t* children;
 } fs_file_t;
 
 fs_file_t* fs_file_create(const char* fname, fs_file_type type,
                           fs_file_t* parent);
 void fs_file_destroy(fs_file_t* file);
+void fs_file_addchild(fs_file_t* dir, fs_file_t* other);
+
+inline static void fs_file_destroy_llist(void* data)
+{
+  fs_file_destroy((fs_file_t*)data);
+}
 
 #endif

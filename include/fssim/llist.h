@@ -36,6 +36,6 @@ void fs_llist_remove_next(fs_llist_t* list);
  *     append(a,b)
  * (a)->(b)->(c)->(d)->NIL
  */
-void fs_llist_append(fs_llist_t* a, fs_llist_t* b);
+fs_llist_t* fs_llist_append(fs_llist_t* a, fs_llist_t* b);
 
 #endif
