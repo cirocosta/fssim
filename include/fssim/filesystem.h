@@ -13,6 +13,7 @@
 /* } fs_filesystem_superblock_t; */
 
 typedef struct fs_filesystem_t {
+  size_t blocks_num;
   fs_fat_t* fat;
   fs_file_t* root;
   fs_file_t* cwd;

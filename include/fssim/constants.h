@@ -15,4 +15,9 @@
 
 #define FS_ERR_MALLOC "Couldn't allocate memory"
 
+typedef enum fs_file_type {
+  FS_FILE_DIRECTORY = 1,
+  FS_FILE_REGULAR
+} fs_file_type;
+
 #endif
