@@ -10,7 +10,11 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
   file->entry = UINT32_MAX;
   file->payload = NULL;
   file->children = NULL;
-  file->parent = parent;
+
+  // dealing w/ root case
+  file->parent = parent == NULL ? file : parent;
+
+  file->attrs = fs_zeroed_file_attrs;
 
   strncpy(file->attrs.fname, fname, FS_NAME_MAX);
   file->attrs.is_directory = type == FS_FILE_DIRECTORY ? 1 : 0;
@@ -18,7 +22,7 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
   return file;
 }
 
-void fs_file_destroy(fs_file_t* file) 
+void fs_file_destroy(fs_file_t* file)
 {
   // TODO traverse the tree and free whatever is bellow?
   free(file);

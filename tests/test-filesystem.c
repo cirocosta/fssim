@@ -30,17 +30,21 @@ void test3()
 {
   //
   // is_dir size last_modified name
-  const char* expected = "d 4096 0 .\n"
-                         "d 4096 0 ..\n";
+  // TODO change TEMPO for a real time
+  // TODO change 0 size to real size
+  const char* expected = "d 0 TEMPO .\n"
+                         "d 0 TEMPO ..\n";
   char* buf = calloc(strlen(expected) + 1, sizeof(*buf));
+  PASSERT(buf, FS_ERR_MALLOC);
+
   memset(buf, '\0', strlen(expected) + 1);
 
   fs_filesystem_t* fs = fs_filesystem_create(10); // 40 KB
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  /* fs_filesystem_ls(fs, "/", buf, strlen(expected) + 1); */
+  fs_filesystem_ls(fs, "/", buf, strlen(expected) + 1);
 
-  /* ASSERT(!strcmp(buf, expected), ""); */
+  ASSERT(!strcmp(buf, expected), "%s != %s", buf, expected);
 
   fs_filesystem_destroy(fs);
   free(buf);

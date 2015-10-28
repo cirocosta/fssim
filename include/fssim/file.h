@@ -6,7 +6,7 @@
 
 typedef struct fs_file_attrs_t {
   char fname[FS_NAME_MAX];
-  long size;
+  uint32_t size;
   long time_creation;
   long time_modification;
   long time_access;
