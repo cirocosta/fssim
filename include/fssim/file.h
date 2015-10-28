@@ -25,12 +25,15 @@ typedef struct fs_file_t {
   fs_llist_t* children;
 } fs_file_t;
 
+// TODO remove parent arg
+//      identify root with FILE_TYPE, which makes
+//      much more sense.
 fs_file_t* fs_file_create(const char* fname, fs_file_type type,
                           fs_file_t* parent);
 void fs_file_destroy(fs_file_t* file);
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other);
 
-inline static void fs_file_destroy_llist(void* data)
+inline static void fs_file_destructor(void* data)
 {
   fs_file_destroy((fs_file_t*)data);
 }

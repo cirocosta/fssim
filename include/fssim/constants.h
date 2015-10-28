@@ -19,7 +19,8 @@
 
 typedef enum fs_file_type {
   FS_FILE_DIRECTORY = 1,
-  FS_FILE_REGULAR
+  FS_FILE_REGULAR,
+  FS_FILE_ROOT_DIR
 } fs_file_type;
 
 #endif

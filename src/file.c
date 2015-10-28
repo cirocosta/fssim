@@ -26,12 +26,14 @@ void fs_file_destroy(fs_file_t* file)
 {
   // TODO traverse the tree and free whatever is bellow?
   if (file->children) 
-    fs_llist_destroy(file->children, fs_file_destroy_llist);
+    fs_llist_destroy(file->children, fs_file_destructor);
   free(file);
 }
 
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
 {
+  other->parent = dir;
+
   if (!dir->children) {
     dir->children = fs_llist_create(other);
   } else {
