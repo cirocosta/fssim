@@ -6,6 +6,7 @@ fs_filesystem_t* fs_filesystem_create(size_t blocks)
   PASSERT(fs, FS_ERR_MALLOC);
 
   fs->blocks_num = blocks;
+  fs->block_size = FS_BLOCK_SIZE;
   fs->fat = NULL;
   fs->root = NULL;
   fs->cwd = NULL;
@@ -94,4 +95,11 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   // the payload and inspecting the content.
 
   free(path);
+}
+
+void fs_filesystem_superblock_2s(fs_filesystem_t* fs, unsigned char* buf, int n)
+{
+  ASSERT(n >= 8, "`buf` must have at least 8 bytes remaining");
+  serialize_uint32_t(buf, fs->block_size);
+  serialize_uint32_t(buf + 4, fs->blocks_num);
 }
