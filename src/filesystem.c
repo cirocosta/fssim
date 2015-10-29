@@ -19,11 +19,11 @@ static FILE* _create_system_file(const char* fname)
   FILE* file;
 
   if (!fs_utils_fexists(fname)) {
-    PASSERT(file = fopen(fname, "w+"), "fopen(w+) failed:");
+    PASSERT(file = fopen(fname, "w+b"), "fopen(w+) failed:");
     return file;
   }
 
-  PASSERT(file = fopen(fname, "r+"), "fopen(r+) failed:");
+  PASSERT(file = fopen(fname, "r+b"), "fopen(r+) failed:");
 
   return file;
 }

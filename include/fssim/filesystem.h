@@ -30,5 +30,6 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname);
 
 // TODO
 void fs_filesystem_unmount(fs_filesystem_t* fs);
+void fs_filesystem_superblock_2s(fs_filesystem_t* fs, char* buf, int n);
 
 #endif

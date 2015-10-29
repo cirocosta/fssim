@@ -139,6 +139,39 @@ AUTHOR:
   See `https://github.com/cirocosta/fssim`. Licensed with MPLv2.
 ```
 
+## Block device Structure
+
+```
+  (size in B)           
+------------------                         --
+4                |  block size             |
+------------------                         | Super Block
+4                |  n = number of blocks   |
+------------------                         --
+                 |                         |
+n*4              |  FAT                    |  File Alloc
+                 |                         |  Table and
+------------------                         |  Free Space
+                 |                         |  Management
+((n-1)/8|0)+1)   |  BMP                    |
+                 |                         |
+------------------                         --
+                 |                         |
+4KB              |  Block 0                | 
+                 |                         | 
+------------------                         | 
+(...)                                      | Files and 
+(...)                                      | its 
+------------------                         | payload
+                 |                         |
+4KB              |  Block N                |
+                 |                         |
+------------------                         --
+```
+
+As we're dealing with >1 byte numbers we have to also care about endianess (as computer  do not agree on MSB). Don't forget to use `htonl` and `ntohl` when (de)serializing numbers from the block char (we're always going with uint32_t, which is fine).
+
+
 ## LICENSE
 
 MPLv2. See `LICENSE`.
