@@ -51,12 +51,19 @@ void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos)
   while (1) {
     tmp_pos = file_pos;
     fs_bmp_free(fat->bmp, file_pos);
-    file_pos = fat->blocks[file_pos]; 
+    file_pos = fat->blocks[file_pos];
 
     if (fat->blocks[tmp_pos] == tmp_pos)
       return;
 
-    fat->blocks[tmp_pos] = tmp_pos;   
+    fat->blocks[tmp_pos] = tmp_pos;
   }
+}
 
+void fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n)
+{
+  ASSERT(n >= fat->length * 4, "`buf` must have at least 8 bytes remaining");
+
+  for (int i = 0; i < fat->length; i++)
+    serialize_uint32_t(buf + (4 * i), fat->blocks[i]);
 }

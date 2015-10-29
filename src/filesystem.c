@@ -97,7 +97,7 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   free(path);
 }
 
-void fs_filesystem_superblock_2s(fs_filesystem_t* fs, unsigned char* buf, int n)
+void fs_filesystem_superblock_2s_(fs_filesystem_t* fs, unsigned char* buf, int n)
 {
   ASSERT(n >= 8, "`buf` must have at least 8 bytes remaining");
   serialize_uint32_t(buf, fs->block_size);

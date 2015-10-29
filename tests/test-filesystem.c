@@ -74,7 +74,7 @@ void test5()
   fs_utils_fdelete(FS_TEST_FNAME);
 
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_superblock_2s(fs, buf, 8);
+  fs_filesystem_superblock_2s_(fs, buf, 8);
 
   ASSERT(deserialize_uint32_t(buf) == 4096, "");
   ASSERT(deserialize_uint32_t(buf + 4) == 666, "");
@@ -90,6 +90,7 @@ int main(int argc, char* argv[])
   TEST(test3, "ls - list empty root dir");
   TEST(test4, "touch - creating a file in empty root");
   TEST(test5, "superblock serialization");
+  /* TEST(test6, "full - serialization"); */
 
   return 0;
 }
