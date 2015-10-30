@@ -153,8 +153,8 @@ void test5()
 void test6()
 {
   const size_t BUFSIZE = 512;
-  unsigned char* buf = calloc(BUFSIZE, sizeof(*buf));
   const size_t BLOCKS = 16;
+  unsigned char* buf = calloc(BUFSIZE, sizeof(*buf));
   fs_bmp_t* bmp = fs_bmp_create(BLOCKS);
 
   PASSERT(buf, FS_ERR_MALLOC);
@@ -178,6 +178,37 @@ void test6()
   free(buf);
 }
 
+void test7()
+{
+  const size_t BUFSIZE = 512;
+  const size_t BLOCKS = 16;
+
+  unsigned char* buf = calloc(BUFSIZE, sizeof(*buf));
+  fs_bmp_t* bmp = fs_bmp_create(BLOCKS);
+
+  PASSERT(buf, FS_ERR_MALLOC);
+
+  // 0b11100000
+  // 0b11100000
+  fs_bmp_alloc(bmp);
+  fs_bmp_alloc(bmp);
+  fs_bmp_alloc(bmp);
+  bmp->last_block = 7;
+  fs_bmp_alloc(bmp);
+  fs_bmp_alloc(bmp);
+  fs_bmp_alloc(bmp);
+
+  fs_bmp_serialize(bmp, buf, BUFSIZE);
+  fs_bmp_t* bmp2 = fs_bmp_load(buf, BLOCKS);
+
+  ASSERT(bmp2->mapping[0] == bmp->mapping[0], "");
+  ASSERT(bmp2->mapping[1] == bmp->mapping[1], "");
+
+  fs_bmp_destroy(bmp);
+  fs_bmp_destroy(bmp2);
+  free(buf);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -186,6 +217,7 @@ int main(int argc, char* argv[])
   TEST(test4, "block alloc");
   TEST(test5, "block alloc - multiple rows");
   TEST(test6, "persistence - serialize");
+  TEST(test7, "persistence - load");
 
   return 0;
 }

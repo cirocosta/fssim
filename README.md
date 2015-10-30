@@ -12,6 +12,7 @@
   - [Flow](#flow)
   - [File Attributes](#file-attributes)
 - [Cli](#cli)
+- [Block device Structure](#block-device-structure)
 - [LICENSE](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->

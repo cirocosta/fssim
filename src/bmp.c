@@ -55,3 +55,13 @@ void fs_bmp_serialize(fs_bmp_t* bmp, unsigned char* buf, int n)
   for (int i = 0; i < bmp->size; i++)
     serialize_uint8_t(buf + i, bmp->mapping[i]);
 }
+
+fs_bmp_t* fs_bmp_load(unsigned char* buf, size_t blocks)
+{
+  fs_bmp_t* bmp = fs_bmp_create(blocks);
+
+  for (size_t i = 0; i < bmp->size; i++)
+    bmp->mapping[i] = deserialize_uint8_t(buf + i);
+
+  return bmp;
+}

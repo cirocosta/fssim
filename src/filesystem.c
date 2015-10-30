@@ -104,3 +104,10 @@ void fs_filesystem_superblock_2s_(fs_filesystem_t* fs, unsigned char* buf,
   serialize_uint32_t(buf, fs->block_size);
   serialize_uint32_t(buf + 4, fs->blocks_num);
 }
+
+void fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n)
+{
+  fs_filesystem_superblock_2s_(fs, buf, n);
+  fs_fat_serialize(fs->fat, buf, n);
+  // TODO serialize files and stuff
+}

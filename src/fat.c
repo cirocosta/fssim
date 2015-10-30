@@ -8,20 +8,29 @@ fs_fat_t* fs_fat_create(size_t length)
   fat->length = length;
   fat->blocks = calloc(fat->length, sizeof(*fat->blocks));
   PASSERT(fat->blocks, FS_ERR_MALLOC);
-  fat->bmp = fs_bmp_create(fat->length);
 
   while (length-- > 0)
     fat->blocks[length] = length;
 
+  fat->bmp = fs_bmp_create(fat->length);
+
   return fat;
 }
 
-fs_fat_t* fs_fat_load(unsigned char* buf, size_t n)
+fs_fat_t* fs_fat_load(unsigned char* buf, size_t blocks)
 {
-  fs_fat_t* fat = fs_fat_create(n);
+  fs_fat_t* fat = malloc(sizeof(*fat));
+  PASSERT(fat, FS_ERR_MALLOC);
 
-  for (size_t i = 0; i < n; i++)
+  size_t i = 0;
+  fat->length = blocks;
+  fat->blocks = calloc(fat->length, sizeof(*fat->blocks));
+  PASSERT(fat->blocks, FS_ERR_MALLOC);
+
+  for (; i < blocks; i++)
     fat->blocks[i] = deserialize_uint32_t(buf + (i * 4));
+
+  fat->bmp = fs_bmp_load(buf + i*4, blocks);
 
   return fat;
 }
