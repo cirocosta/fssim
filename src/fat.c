@@ -16,6 +16,16 @@ fs_fat_t* fs_fat_create(size_t length)
   return fat;
 }
 
+fs_fat_t* fs_fat_load(unsigned char* buf, size_t n)
+{
+  fs_fat_t* fat = fs_fat_create(n);
+
+  for (size_t i = 0; i < n; i++) 
+    fat->blocks[i] = deserialize_uint32_t(buf + (i * 4));
+
+  return fat;
+}
+
 void fs_fat_destroy(fs_fat_t* fat)
 {
   fs_bmp_destroy(fat->bmp);

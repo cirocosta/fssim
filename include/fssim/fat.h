@@ -27,6 +27,7 @@ typedef struct fs_fat_t {
 } fs_fat_t;
 
 fs_fat_t* fs_fat_create(size_t length);
+fs_fat_t* fs_fat_load(unsigned char* buf, size_t n);
 void fs_fat_destroy(fs_fat_t* fat);
 
 void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos);

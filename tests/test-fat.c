@@ -125,6 +125,44 @@ void test5()
   free(buf);
 }
 
+void test6()
+{
+  const size_t BUFSIZE = 512;
+  fs_fat_t* fat = fs_fat_create(7);
+  unsigned char* buf = calloc(BUFSIZE, sizeof(*buf));
+  PASSERT(buf, FS_ERR_MALLOC);
+  memset(buf, '\0', 512);
+
+  uint32_t file_entry0 = fs_fat_addfile(fat);
+  uint32_t file_entry1 = fs_fat_addfile(fat);
+
+  fs_fat_addblock(fat, file_entry0);
+  fs_fat_addblock(fat, file_entry1);
+  fs_fat_addblock(fat, file_entry1);
+  fs_fat_addblock(fat, file_entry1);
+  fs_fat_addblock(fat, file_entry1);
+  fs_fat_removefile(fat, file_entry0);
+  fs_fat_addblock(fat, file_entry1);
+
+  // file1 :  1->3->4->5->6->0->2->NIL
+  fs_fat_addblock(fat, file_entry1);
+  fs_fat_serialize(fat, buf, BUFSIZE);
+
+  fs_fat_t* fat2 = fs_fat_load(buf, 7);
+
+  ASSERT(fat2->blocks[0] == fat->blocks[0], "");
+  ASSERT(fat2->blocks[1] == fat->blocks[1], "");
+  ASSERT(fat2->blocks[2] == fat->blocks[2], "");
+  ASSERT(fat2->blocks[3] == fat->blocks[3], "");
+  ASSERT(fat2->blocks[4] == fat->blocks[4], "");
+  ASSERT(fat2->blocks[5] == fat->blocks[5], "");
+  ASSERT(fat2->blocks[6] == fat->blocks[6], "");
+
+  fs_fat_destroy(fat);
+  fs_fat_destroy(fat2);
+  free(buf);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -133,7 +171,7 @@ int main(int argc, char* argv[])
   TEST(test4, "remove file");
 
   TEST(test5, "persistence - serialize");
-  /* TEST(test6, "persistence - deserialize"); */
+  TEST(test6, "persistence - load()");
 
   return 0;
 }
