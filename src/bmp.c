@@ -46,3 +46,12 @@ uint32_t fs_bmp_alloc(fs_bmp_t* bmp)
 
   ASSERT(0, "fs_bmp_alloc(): No free space found");
 }
+
+void fs_bmp_serialize(fs_bmp_t* bmp, unsigned char* buf, int n)
+{
+  ASSERT(n >= bmp->size, "`buf` must at least have %lu bytes remaining",
+         bmp->size);
+
+  for (int i = 0; i < bmp->size; i++)
+    serialize_uint8_t(buf + i, bmp->mapping[i]);
+}

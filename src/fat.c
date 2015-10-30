@@ -20,7 +20,7 @@ fs_fat_t* fs_fat_load(unsigned char* buf, size_t n)
 {
   fs_fat_t* fat = fs_fat_create(n);
 
-  for (size_t i = 0; i < n; i++) 
+  for (size_t i = 0; i < n; i++)
     fat->blocks[i] = deserialize_uint32_t(buf + (i * 4));
 
   return fat;
@@ -72,7 +72,8 @@ void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos)
 
 void fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n)
 {
-  ASSERT(n >= fat->length * 4, "`buf` must have at least 8 bytes remaining");
+  ASSERT(n >= fat->length, "`buf` must at least have %lu bytes remaining",
+         fat->length);
 
   for (int i = 0; i < fat->length; i++)
     serialize_uint32_t(buf + (4 * i), fat->blocks[i]);

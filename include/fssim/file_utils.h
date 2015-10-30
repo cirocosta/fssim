@@ -29,6 +29,21 @@ static inline unsigned char* serialize_uint32_t(unsigned char* buffer,
   return buffer + 4;
 }
 
+static inline unsigned char* serialize_uint8_t(unsigned char* buffer,
+                                               uint8_t value)
+{
+  buffer[0] = value;
+  return buffer + 1;
+}
+
+static inline uint8_t deserialize_uint8_t(unsigned char* buffer)
+{
+  uint32_t value = 0;
+
+  value = buffer[0];
+  return value;
+}
+
 static inline uint32_t deserialize_uint32_t(unsigned char* buffer)
 {
   uint32_t value = 0;
