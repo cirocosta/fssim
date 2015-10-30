@@ -121,6 +121,8 @@ void test5()
   ASSERT(deserialize_uint32_t(buf + 20) == fat->blocks[5], "");
   ASSERT(deserialize_uint32_t(buf + 24) == fat->blocks[6], "");
 
+  ASSERT(deserialize_uint8_t(buf + 28) == fat->bmp->mapping[0], "");
+
   fs_fat_destroy(fat);
   free(buf);
 }
@@ -157,6 +159,9 @@ void test6()
   ASSERT(fat2->blocks[4] == fat->blocks[4], "");
   ASSERT(fat2->blocks[5] == fat->blocks[5], "");
   ASSERT(fat2->blocks[6] == fat->blocks[6], "");
+
+  ASSERT(fat->bmp->mapping[0], "Must not be zero as we allocated stuff before");
+  ASSERT(fat2->bmp->mapping[0] == fat->bmp->mapping[0], "");
 
   fs_fat_destroy(fat);
   fs_fat_destroy(fat2);

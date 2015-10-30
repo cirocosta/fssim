@@ -81,9 +81,13 @@ void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos)
 
 void fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n)
 {
-  ASSERT(n >= fat->length, "`buf` must at least have %lu bytes remaining",
-         fat->length);
+  int i = 0;
+  ASSERT(n >= (fat->length + fat->bmp->size),
+         "`buf` must at least have %lu bytes remaining",
+         fat->length + fat->bmp->size);
 
-  for (int i = 0; i < fat->length; i++)
+  for (; i < fat->length; i++)
     serialize_uint32_t(buf + (4 * i), fat->blocks[i]);
+
+  fs_bmp_serialize(fat->bmp, buf + (i * 4), n - fat->length);
 }
