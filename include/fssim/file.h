@@ -8,10 +8,10 @@
 typedef struct fs_file_attrs_t {
   char fname[FS_NAME_MAX];
   uint32_t size;
-  long time_creation;
-  long time_modification;
-  long time_access;
-  unsigned char is_directory;
+  int32_t time_creation;
+  int32_t time_modification;
+  int32_t time_access;
+  uint8_t is_directory;
 } fs_file_attr_t;
 
 static const struct fs_file_attrs_t fs_zeroed_file_attrs = { 0 };

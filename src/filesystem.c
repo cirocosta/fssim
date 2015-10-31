@@ -15,6 +15,21 @@ fs_filesystem_t* fs_filesystem_create(size_t blocks)
   return fs;
 }
 
+fs_filesystem_t* fs_filesystem_load(unsigned char* buf)
+{
+  uint32_t blocks = deserialize_uint32_t(buf);
+  uint32_t block_size = deserialize_uint32_t(buf + 4);
+
+  fs_filesystem_t* fs = fs_filesystem_create(blocks);
+
+  fs->block_size = block_size;
+  fs->fat = fs_fat_load(buf + 8, blocks);
+
+  // TODO read file structure
+    
+  return fs;
+}
+
 static FILE* _create_system_file(const char* fname)
 {
   FILE* file;
@@ -56,6 +71,7 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
   fs->fat = fs_fat_create(fs->blocks_num);
   fs->root = fs_file_create("/", FS_FILE_DIRECTORY, parent);
   fs->cwd = fs->root;
+  fs->root->entry = fs_fat_addfile(fs->fat);
 }
 
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
@@ -66,10 +82,13 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 
   fs_file_t* f = fs_file_create(fname, FS_FILE_REGULAR, fs->cwd);
   fs_file_addchild(fs->cwd, f);
+  f->parent = fs->cwd;
+  f->entry = fs_fat_addfile(fs->fat);
 
   return f;
 }
 
+// FIXME horrible
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n)
 {

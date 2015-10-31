@@ -29,6 +29,17 @@ static inline unsigned char* serialize_uint32_t(unsigned char* buffer,
   return buffer + 4;
 }
 
+static inline unsigned char* serialize_int32_t(unsigned char* buffer,
+                                               int32_t value)
+{
+  buffer[0] = value >> 24;
+  buffer[1] = value >> 16;
+  buffer[2] = value >> 8;
+  buffer[3] = value;
+
+  return buffer + 4;
+}
+
 static inline unsigned char* serialize_uint8_t(unsigned char* buffer,
                                                uint8_t value)
 {
@@ -45,6 +56,18 @@ static inline uint8_t deserialize_uint8_t(unsigned char* buffer)
 }
 
 static inline uint32_t deserialize_uint32_t(unsigned char* buffer)
+{
+  uint32_t value = 0;
+
+  value |= buffer[0] << 24;
+  value |= buffer[1] << 16;
+  value |= buffer[2] << 8;
+  value |= buffer[3];
+
+  return value;
+}
+
+static inline int32_t deserialize_int32_t(unsigned char* buffer)
 {
   uint32_t value = 0;
 

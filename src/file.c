@@ -32,6 +32,7 @@ void fs_file_destroy(fs_file_t* file)
 
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
 {
+  ASSERT(dir->attrs.is_directory == 1, "File must be of type FS_FILE_DIRECTORY");
   other->parent = dir;
 
   if (!dir->children) {

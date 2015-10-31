@@ -17,6 +17,7 @@ typedef struct fs_filesystem_t {
 } fs_filesystem_t;
 
 fs_filesystem_t* fs_filesystem_create(size_t blocks);
+fs_filesystem_t* fs_filesystem_load(unsigned char* buf);
 void fs_filesystem_destroy(fs_filesystem_t* fs);
 
 void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname);
