@@ -15,7 +15,6 @@ typedef struct fs_file_attrs_t {
   uint32_t size;
 } fs_file_attr_t;
 
-static const struct fs_file_attrs_t fs_zeroed_file_attrs = { 0 };
 
 typedef struct fs_file_t {
   uint32_t fblock;
@@ -27,13 +26,18 @@ typedef struct fs_file_t {
   uint8_t children_count;
 } fs_file_t;
 
+static const struct fs_file_attrs_t fs_zeroed_file_attrs = { 0 };
+static const struct fs_file_t fs_zeroed_file = { 0 };
+
 // TODO remove parent arg
 //      identify root with FILE_TYPE, which makes
 //      much more sense.
 fs_file_t* fs_file_create(const char* fname, fs_file_type type,
                           fs_file_t* parent);
+fs_file_t* fs_file_load(unsigned char* buf);
 void fs_file_destroy(fs_file_t* file);
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other);
+void fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n);
 
 inline static void fs_file_destructor(void* data)
 {

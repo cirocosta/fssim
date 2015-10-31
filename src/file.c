@@ -43,6 +43,9 @@ void fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
   unsigned counter = 0;
   unsigned offset = 0;
 
+  serialize_uint8_t(buf, file->children_count);
+  counter++;
+
   while (tmp) {
     offset = counter * 32;
     curr_file = (fs_file_t*)tmp->data;
@@ -56,7 +59,49 @@ void fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
     serialize_uint32_t(buf + offset + 28, curr_file->attrs.size);
 
     tmp = tmp->next;
+    counter++;
   }
+}
+
+fs_file_t* fs_file_load(unsigned char* buf)
+{
+  fs_file_t* file = malloc(sizeof(*file));
+  PASSERT(file, FS_ERR_MALLOC);
+
+  unsigned offset = 0;
+  unsigned counter = 0;
+  unsigned children_count = 0;
+
+  *file = fs_zeroed_file;
+  file->attrs = fs_zeroed_file_attrs;
+
+  children_count = deserialize_uint8_t(buf);
+  file->attrs.is_directory = 1;
+  counter++;
+
+  while (counter <= children_count) {
+    // FIXME this is horrible
+    fs_file_t* new_file = malloc(sizeof(*new_file));
+    PASSERT(new_file, FS_ERR_MALLOC);
+    *new_file = fs_zeroed_file;
+    new_file->attrs = fs_zeroed_file_attrs;
+
+    offset = counter * 32;
+
+    new_file->attrs.is_directory = deserialize_uint8_t(buf + offset);
+    memcpy(new_file->attrs.fname, buf + offset + 1, 11);
+    new_file->fblock = deserialize_uint32_t(buf + offset + 12);
+    new_file->attrs.ctime = deserialize_int32_t(buf + offset + 16);
+    new_file->attrs.mtime = deserialize_int32_t(buf + offset + 20);
+    new_file->attrs.atime = deserialize_int32_t(buf + offset + 24);
+    new_file->attrs.size = deserialize_uint32_t(buf + offset + 28);
+
+    fs_file_addchild(file, new_file);
+
+    counter++;
+  }
+
+  return file;
 }
 
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
@@ -65,11 +110,10 @@ void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
          "File must be of type FS_FILE_DIRECTORY");
   other->parent = dir;
 
-  if (!dir->children) {
+  if (!dir->children)
     dir->children = fs_llist_create(other);
-  } else {
+  else
     dir->children = fs_llist_append(fs_llist_create(other), dir->children);
-  }
 
   dir->children_count++;
 }

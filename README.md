@@ -13,6 +13,9 @@
   - [File Attributes](#file-attributes)
 - [Cli](#cli)
 - [Block device Structure](#block-device-structure)
+  - [Overview](#overview)
+  - [Files](#files)
+  - [Directories](#directories)
 - [LICENSE](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -140,6 +143,7 @@ AUTHOR:
   See `https://github.com/cirocosta/fssim`. Licensed with MPLv2.
 ```
 
+
 ## Block device Structure
 
 ### Overview
@@ -174,13 +178,33 @@ n*4              |  FAT                    |  File Alloc
 
 As we're dealing with >1 byte numbers we have to also care about endianess (as computer  do not agree on MSB). Don't forget to use `htonl` and `ntohl` when (de)serializing numbers from the block char (we're always going with uint32_t, which is fine).
 
-## Files
+### Files
 
 Files are implemented as an unstructured sequence of bytes. Each file is indexed by the location of its first block in the FAT and might have any size up to disk limit and with a 'floor' of 4KB (given that we're using a granularity of `1 Block = 4096 Bytes`).
 
-## Directories
+### Directories
 
-Directory blocks are well structured:
+Directory blocks are well structured. Each directory block starts with 32B reserved for metadata and 127 other 32B reserved for directory entries (thus, limiting a directory to contain 127 entries - files or other directories).
+
+```
+Directory:
+
+(size in B)           
++----------+                
+| 32       |  directory metadata
++----------+                
+| 4064     |  directory entries
++----------+                
+
+Directory Metadata:
+
+        1B              31B   // reserved for future use
++-------------------------------+
+| children_count |   padding     |
++-------------------------------+
+```
+
+Each directory entry (32B) has well defined structure:
 
 ```c
 struct directory_entry {
@@ -195,14 +219,14 @@ struct directory_entry {
 
 ```
 
-Being serialized into:
+Being serialized into and deserialized from:
 ```
 /----------------------- 32Bytes ------------------------/     
 
                                                         
    1B       11B      4B       4B      4B      4B     4B
 +-------------------------------------------------+------+  --
-| is_dir | fname | fblock | ctime | mtime | atime | size |  |    0
+| is_dir | fname | fblock | ctime | mtime | atime | size |  |    1
 +-------------------------------------------------+------+  --
                                                             |  
                       (...)                                 |   (..)
@@ -212,8 +236,7 @@ Being serialized into:
 +-------------------------------------------------+------+  --
 ``` 
 
-As a design decision, directories must fit in a single block (4KB) only. This limits each layer in the hierarchy tree to support a maximum of 128 entries (files or directories). Nested directories are limited to disk limit.
-
+As a design decision, directories must fit in a single block (4KB) only. This limits each layer in the hierarchy tree to support a maximum of 127 entries (files or directories) as mentioned but directory nesting is only limited by disk limit.
 
 ## LICENSE
 
