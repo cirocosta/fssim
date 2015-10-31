@@ -142,6 +142,8 @@ AUTHOR:
 
 ## Block device Structure
 
+### Overview
+
 ```
   (size in B)           
 ------------------                         --
@@ -171,6 +173,45 @@ n*4              |  FAT                    |  File Alloc
 ```
 
 As we're dealing with >1 byte numbers we have to also care about endianess (as computer  do not agree on MSB). Don't forget to use `htonl` and `ntohl` when (de)serializing numbers from the block char (we're always going with uint32_t, which is fine).
+
+## Files
+
+Files are implemented as an unstructured sequence of bytes. Each file is indexed by the location of its first block in the FAT and might have any size up to disk limit and with a 'floor' of 4KB (given that we're using a granularity of `1 Block = 4096 Bytes`).
+
+## Directories
+
+Directory blocks are well structured:
+
+```c
+struct directory_entry {
+  uint8_t is_dir;   // bool: directory or not
+  char fname[11];   // filename
+  uint32_t fblock;  // first block in FAT
+  uint32_t ctime;   // creation time
+  uint32_t mtime;   // last modified
+  uint32_t atime;   // last access
+};
+
+```
+
+Being serialized into:
+```
+/--------------- 32 Bytes ------------------------/     
+
+                                                        
+   1B       11B      4B       4B      4B      4B        
++-------------------------------------------------+     --
+| is_dir | fname | fblock | ctime | mtime | atime |     |    0
++-------------------------------------------------+     --
+                                                        |  
+                      (...)                             |   (..)
+                                                        |
++-------------------------------------------------+     --
+| is_dir | fname | fblock | ctime | mtime | atime |     |   (127)
++-------------------------------------------------+     --
+``` 
+
+As a design decision, directories must fit in a single block (4KB) only. This limits each layer in the hierarchy tree to support a maximum of 128 entries (files or directories). Nested directories are limited to disk limit.
 
 
 ## LICENSE
