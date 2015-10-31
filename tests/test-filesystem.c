@@ -99,9 +99,12 @@ void test6()
   ASSERT(fs2->blocks_num == fs->blocks_num, "%lu != %lu", fs2->blocks_num,
          fs->blocks_num);
   ASSERT(fs2->block_size == fs->block_size, "");
-  /* ASSERT(fs2->root->attrs.is_directory == 1, ""); */
-  /* ASSERT(fs2->root->fblock == fs->root->fblock, ""); */
-  /* ASSERT(fs2->root->children_count == fs->root->children_count, ""); */
+  ASSERT(fs2->root->attrs.is_directory == 1, "");
+  ASSERT(fs2->root->fblock == fs->root->fblock, "");
+  ASSERT(fs2->root->children_count == fs->root->children_count, "");
+
+  // TODO we need a way of deciding during the `file_load' time that
+  //      we're dealing with the root directory
   /* ASSERT(!strcmp(fs2->root->attrs.fname, fs->root->attrs.fname), ""); */
 
   fs_filesystem_destroy(fs);

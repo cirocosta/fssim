@@ -116,7 +116,8 @@ void fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n)
   int written = 0;
 
   written += fs_filesystem_serialize_superblock(fs, buf, n);
-  written += fs_fat_serialize(fs->fat, buf + 8, n-written);
+  written += fs_fat_serialize(fs->fat, buf + written, n-written);
+  written += fs_file_serialize_dir(fs->root, buf + written, n-written);
 
   // TODO serialize files and stuff
 }
@@ -130,7 +131,10 @@ fs_filesystem_t* fs_filesystem_load(unsigned char* buf)
 
   fs->block_size = block_size;
   fs->fat = fs_fat_load(buf + 8, blocks);
-  // TODO load file
+  
+  // FIXME maybe we could pass &written in each 'load' .. which would be
+  //       MUCH better than relying on some macros like this.
+  fs->root = fs_file_load(buf + FS_FAT_SERIALIZE_SIZE(fs->fat) + 8);
 
   return fs;
 }

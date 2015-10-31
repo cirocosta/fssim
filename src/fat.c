@@ -82,10 +82,10 @@ void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos)
 int fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n)
 {
   int i = 0;
-  int to_write = fat->length * 4 + fat->bmp->size;
+  int to_write = FS_FAT_SERIALIZE_SIZE(fat);
 
   // TODO verify if this is correct
-  ASSERT(n >= to_write, "`buf` must at least have %lu bytes remaining. Has %d)",
+  ASSERT(n >= to_write, "`buf` must at least have %d bytes remaining. Has %d)",
          to_write, n);
 
   for (; i < fat->length; i++)

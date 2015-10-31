@@ -37,7 +37,7 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
 fs_file_t* fs_file_load(unsigned char* buf);
 void fs_file_destroy(fs_file_t* file);
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other);
-void fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n);
+int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n);
 
 inline static void fs_file_destructor(void* data)
 {

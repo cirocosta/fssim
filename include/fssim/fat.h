@@ -1,10 +1,12 @@
 #ifndef FSSIM__FAT_H
-#define FSSIM__FAT_H 
+#define FSSIM__FAT_H
 
 #include "fssim/common.h"
 #include "fssim/constants.h"
 #include "fssim/bmp.h"
 #include "fssim/file_utils.h"
+
+#define FS_FAT_SERIALIZE_SIZE(__fat) (__fat->length * 4 + __fat->bmp->size)
 
 /**
  * FAT - File Allocation Table
