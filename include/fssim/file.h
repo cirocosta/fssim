@@ -4,25 +4,27 @@
 #include "fssim/common.h"
 #include "fssim/constants.h"
 #include "fssim/llist.h"
+#include "fssim/file_utils.h"
 
 typedef struct fs_file_attrs_t {
-  char fname[FS_NAME_MAX];
-  uint32_t size;
-  int32_t time_creation;
-  int32_t time_modification;
-  int32_t time_access;
   uint8_t is_directory;
+  char fname[FS_NAME_MAX];
+  int32_t ctime;
+  int32_t mtime;
+  int32_t atime;
+  uint32_t size;
 } fs_file_attr_t;
 
 static const struct fs_file_attrs_t fs_zeroed_file_attrs = { 0 };
 
 typedef struct fs_file_t {
-  uint32_t entry;
-  char* payload;
+  uint32_t fblock;
+  uint8_t* payload;
   fs_file_attr_t attrs;
 
   struct fs_file_t* parent;
   fs_llist_t* children;
+  uint8_t children_count;
 } fs_file_t;
 
 // TODO remove parent arg

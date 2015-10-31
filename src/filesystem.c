@@ -71,7 +71,7 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
   fs->fat = fs_fat_create(fs->blocks_num);
   fs->root = fs_file_create("/", FS_FILE_DIRECTORY, parent);
   fs->cwd = fs->root;
-  fs->root->entry = fs_fat_addfile(fs->fat);
+  fs->root->fblock = fs_fat_addfile(fs->fat);
 }
 
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
@@ -83,7 +83,7 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
   fs_file_t* f = fs_file_create(fname, FS_FILE_REGULAR, fs->cwd);
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
-  f->entry = fs_fat_addfile(fs->fat);
+  f->fblock = fs_fat_addfile(fs->fat);
 
   return f;
 }

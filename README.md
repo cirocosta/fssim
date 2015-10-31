@@ -190,25 +190,26 @@ struct directory_entry {
   uint32_t ctime;   // creation time
   uint32_t mtime;   // last modified
   uint32_t atime;   // last access
+  uint32_t size;    // file size
 };
 
 ```
 
 Being serialized into:
 ```
-/--------------- 32 Bytes ------------------------/     
+/----------------------- 32Bytes ------------------------/     
 
                                                         
-   1B       11B      4B       4B      4B      4B        
-+-------------------------------------------------+     --
-| is_dir | fname | fblock | ctime | mtime | atime |     |    0
-+-------------------------------------------------+     --
-                                                        |  
-                      (...)                             |   (..)
-                                                        |
-+-------------------------------------------------+     --
-| is_dir | fname | fblock | ctime | mtime | atime |     |   (127)
-+-------------------------------------------------+     --
+   1B       11B      4B       4B      4B      4B     4B
++-------------------------------------------------+------+  --
+| is_dir | fname | fblock | ctime | mtime | atime | size |  |    0
++-------------------------------------------------+------+  --
+                                                            |  
+                      (...)                                 |   (..)
+                                                            |
++-------------------------------------------------+------+  --
+| is_dir | fname | fblock | ctime | mtime | atime | size |  |   (127)
++-------------------------------------------------+------+  --
 ``` 
 
 As a design decision, directories must fit in a single block (4KB) only. This limits each layer in the hierarchy tree to support a maximum of 128 entries (files or directories). Nested directories are limited to disk limit.
