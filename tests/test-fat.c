@@ -129,11 +129,11 @@ void test5()
 
 void test6()
 {
-  const size_t BUFSIZE = 512;
   fs_fat_t* fat = fs_fat_create(7);
+  const size_t BUFSIZE = fat->length*4 + fat->bmp->size;
   unsigned char* buf = calloc(BUFSIZE, sizeof(*buf));
   PASSERT(buf, FS_ERR_MALLOC);
-  memset(buf, '\0', 512);
+  memset(buf, '\0', BUFSIZE);
 
   uint32_t file_entry0 = fs_fat_addfile(fat);
   uint32_t file_entry1 = fs_fat_addfile(fat);

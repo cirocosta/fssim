@@ -33,6 +33,6 @@ void fs_fat_destroy(fs_fat_t* fat);
 void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos);
 uint32_t fs_fat_addfile(fs_fat_t* fat);
 uint32_t fs_fat_addblock(fs_fat_t* fat, uint32_t file_pos);
-void fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n);
+int fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n);
 
 #endif

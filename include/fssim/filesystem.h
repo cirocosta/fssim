@@ -30,7 +30,7 @@ void fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n);
 void fs_filesystem_unmount(fs_filesystem_t* fs);
 
 // private
-void fs_filesystem_superblock_2s_(fs_filesystem_t* fs, unsigned char* buf,
-                                  int n);
+int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
+                                       int n);
 
 #endif

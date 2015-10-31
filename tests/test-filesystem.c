@@ -39,7 +39,7 @@ void test3()
 
   memset(buf, '\0', strlen(expected) + 1);
 
-  fs_filesystem_t* fs = fs_filesystem_create(10); 
+  fs_filesystem_t* fs = fs_filesystem_create(10);
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   fs_filesystem_ls(fs, "/", buf, strlen(expected) + 1);
@@ -52,7 +52,7 @@ void test3()
 
 void test4()
 {
-  fs_filesystem_t* fs = fs_filesystem_create(10); 
+  fs_filesystem_t* fs = fs_filesystem_create(10);
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
@@ -67,17 +67,17 @@ void test4()
 
 void test5()
 {
-  fs_filesystem_t* fs = fs_filesystem_create(666); 
+  fs_filesystem_t* fs = fs_filesystem_create(666);
   unsigned char* buf = calloc(8, sizeof(*buf));
 
   PASSERT(buf, FS_ERR_MALLOC);
   fs_utils_fdelete(FS_TEST_FNAME);
 
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_superblock_2s_(fs, buf, 8);
+  fs_filesystem_serialize_superblock(fs, buf, 8);
 
-  ASSERT(deserialize_uint32_t(buf) == 4096, "");
-  ASSERT(deserialize_uint32_t(buf + 4) == 666, "");
+  ASSERT(deserialize_uint32_t(buf) == 4096, "");    // block size
+  ASSERT(deserialize_uint32_t(buf + 4) == 666, ""); // blocks_num
 
   fs_filesystem_destroy(fs);
   free(buf);
@@ -85,23 +85,27 @@ void test5()
 
 void test6()
 {
-  fs_filesystem_t* fs = fs_filesystem_create(666);
+  fs_filesystem_t* fs = fs_filesystem_create(16);
   unsigned char* buf = calloc(512, sizeof(*buf));
 
   PASSERT(buf, FS_ERR_MALLOC);
 
   fs_utils_fdelete(FS_TEST_FNAME);
+
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   fs_filesystem_serialize(fs, buf, 512);
-
   fs_filesystem_t* fs2 = fs_filesystem_load(buf);
 
-  ASSERT(fs2->blocks_num == fs->blocks_num, "");
+  ASSERT(fs2->blocks_num == fs->blocks_num, "%lu != %lu", fs2->blocks_num,
+         fs->blocks_num);
   ASSERT(fs2->block_size == fs->block_size, "");
-  ASSERT(fs2->root->attrs.is_directory == 1, "");
-  ASSERT(!strcmp(fs2->root->attrs.fname, fs->root->attrs.fname), "");
+  /* ASSERT(fs2->root->attrs.is_directory == 1, ""); */
+  /* ASSERT(fs2->root->fblock == fs->root->fblock, ""); */
+  /* ASSERT(fs2->root->children_count == fs->root->children_count, ""); */
+  /* ASSERT(!strcmp(fs2->root->attrs.fname, fs->root->attrs.fname), ""); */
 
   fs_filesystem_destroy(fs);
+  fs_filesystem_destroy(fs2);
   free(buf);
 }
 
@@ -112,7 +116,7 @@ int main(int argc, char* argv[])
   TEST(test3, "ls - list empty root dir");
   TEST(test4, "touch - creating a file in empty root");
   TEST(test5, "superblock serialization");
-  /* TEST(test6, "full load w/ only root directory"); */
+  TEST(test6, "full load w/ only root directory");
 
   return 0;
 }

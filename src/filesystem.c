@@ -15,21 +15,6 @@ fs_filesystem_t* fs_filesystem_create(size_t blocks)
   return fs;
 }
 
-fs_filesystem_t* fs_filesystem_load(unsigned char* buf)
-{
-  uint32_t blocks = deserialize_uint32_t(buf);
-  uint32_t block_size = deserialize_uint32_t(buf + 4);
-
-  fs_filesystem_t* fs = fs_filesystem_create(blocks);
-
-  fs->block_size = block_size;
-  fs->fat = fs_fat_load(buf + 8, blocks);
-
-  // TODO read file structure
-    
-  return fs;
-}
-
 static FILE* _create_system_file(const char* fname)
 {
   FILE* file;
@@ -116,17 +101,36 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   free(path);
 }
 
-void fs_filesystem_superblock_2s_(fs_filesystem_t* fs, unsigned char* buf,
-                                  int n)
+int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
+                                        int n)
 {
   ASSERT(n >= 8, "`buf` must have at least 8 bytes remaining");
   serialize_uint32_t(buf, fs->block_size);
   serialize_uint32_t(buf + 4, fs->blocks_num);
+
+  return 8;
 }
 
 void fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n)
 {
-  fs_filesystem_superblock_2s_(fs, buf, n);
-  fs_fat_serialize(fs->fat, buf, n);
+  int written = 0;
+
+  written += fs_filesystem_serialize_superblock(fs, buf, n);
+  written += fs_fat_serialize(fs->fat, buf + 8, n-written);
+
   // TODO serialize files and stuff
+}
+
+fs_filesystem_t* fs_filesystem_load(unsigned char* buf)
+{
+  uint32_t block_size = deserialize_uint32_t(buf);
+  uint32_t blocks = deserialize_uint32_t(buf + 4);
+
+  fs_filesystem_t* fs = fs_filesystem_create(blocks);
+
+  fs->block_size = block_size;
+  fs->fat = fs_fat_load(buf + 8, blocks);
+  // TODO load file
+
+  return fs;
 }

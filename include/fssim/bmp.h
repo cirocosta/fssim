@@ -36,7 +36,7 @@ uint32_t fs_bmp_alloc(fs_bmp_t* bmp);
 fs_bmp_t* fs_bmp_load(unsigned char* buf, size_t blocks);
 
 // TODO
-void fs_bmp_serialize(fs_bmp_t* bmp, unsigned char* buf, int n);
+int fs_bmp_serialize(fs_bmp_t* bmp, unsigned char* buf, int n);
 
 #define FS_BMP_IS_ON_(__bmp, __pos)                                            \
   (CHECK_LBIT(__bmp->mapping[(__pos / 8)], (__pos % 8)))

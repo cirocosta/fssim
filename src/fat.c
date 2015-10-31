@@ -30,7 +30,7 @@ fs_fat_t* fs_fat_load(unsigned char* buf, size_t blocks)
   for (; i < blocks; i++)
     fat->blocks[i] = deserialize_uint32_t(buf + (i * 4));
 
-  fat->bmp = fs_bmp_load(buf + i*4, blocks);
+  fat->bmp = fs_bmp_load(buf + i * 4, blocks);
 
   return fat;
 }
@@ -79,17 +79,19 @@ void fs_fat_removefile(fs_fat_t* fat, uint32_t file_pos)
   }
 }
 
-void fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n)
+int fs_fat_serialize(fs_fat_t* fat, unsigned char* buf, int n)
 {
   int i = 0;
-  
+  int to_write = fat->length * 4 + fat->bmp->size;
+
   // TODO verify if this is correct
-  ASSERT(n >= (fat->length + fat->bmp->size),
-         "`buf` must at least have %lu bytes remaining",
-         fat->length + fat->bmp->size);
+  ASSERT(n >= to_write, "`buf` must at least have %lu bytes remaining. Has %d)",
+         to_write, n);
 
   for (; i < fat->length; i++)
     serialize_uint32_t(buf + (4 * i), fat->blocks[i]);
 
   fs_bmp_serialize(fat->bmp, buf + (i * 4), n - fat->length);
+
+  return to_write;
 }
