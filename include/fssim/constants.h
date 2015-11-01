@@ -20,10 +20,13 @@
 #define FS_DATE_FORMAT "%4Y-%2m-%2d %2H:%2M"
 #define FS_DATE_FORMAT_SIZE 17
 
-#define FS_FILESIZE_FORMAT "%3.1f%2s"
-#define FS_FILESIZE_FORMAT_SIZE 8
+#define FS_FSIZE_FORMAT "%5.1f%2s"
+#define FS_FSIZE_FORMAT_SIZE 8
 
-static const char* FS_FILESIZE_UNITS[] = { "B", "KB", "MB", "GB" };
+#define FS_LS_FORMAT "%c %7s %16s %-10s\n"
+#define FS_LS_FORMAT_SIZE 39
+
+static const char* FS_FSIZE_UNITS[] = { "B", "KB", "MB", "GB" };
 
 typedef enum fs_file_type {
   FS_FILE_DIRECTORY = 1,

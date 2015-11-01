@@ -81,6 +81,8 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   unsigned num_path_comp;
   char** path = fs_utils_splitpath(abspath, &num_path_comp);
   int written = 0;
+  char mtime_buf[FS_DATE_FORMAT_SIZE] = { 0 };
+  char fsize_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
 
   if (num_path_comp) { // we're not in the root
     // go to the correct location and then proceed
@@ -88,12 +90,17 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
     ASSERT(0, "not supported.");
   }
 
-  written += snprintf(buf + written, n, "%c %u %s .\n",
-                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f',
-                      fs->cwd->attrs.size, "TEMPO");
-  written += snprintf(buf + written, n - written, "%c %u %s ..\n",
-                      fs->cwd->parent->attrs.is_directory == 1 ? 'd' : 'f',
-                      fs->cwd->parent->attrs.size, "TEMPO");
+  fs_utils_fsize2str(fs->root->attrs.size * FS_BLOCK_SIZE, fsize_buf,
+                     FS_FSIZE_FORMAT_SIZE);
+  fs_utils_secs2str(fs->root->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
+
+  written += snprintf(buf + written, n, FS_LS_FORMAT,
+                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
+                      mtime_buf, ".");
+
+  written += snprintf(buf + written, n, FS_LS_FORMAT,
+                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
+                      mtime_buf, "..");
 
   // TODO
   // parse directory file references by parsing
@@ -103,7 +110,7 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
 }
 
 int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
-                                        int n)
+                                       int n)
 {
   ASSERT(n >= 8, "`buf` must have at least 8 bytes remaining");
   serialize_uint32_t(buf, fs->block_size);
@@ -117,8 +124,8 @@ void fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n)
   int written = 0;
 
   written += fs_filesystem_serialize_superblock(fs, buf, n);
-  written += fs_fat_serialize(fs->fat, buf + written, n-written);
-  written += fs_file_serialize_dir(fs->root, buf + written, n-written);
+  written += fs_fat_serialize(fs->fat, buf + written, n - written);
+  written += fs_file_serialize_dir(fs->root, buf + written, n - written);
 
   // TODO serialize files and stuff
 }
@@ -132,7 +139,7 @@ fs_filesystem_t* fs_filesystem_load(unsigned char* buf)
 
   fs->block_size = block_size;
   fs->fat = fs_fat_load(buf + 8, blocks);
-  
+
   // FIXME maybe we could pass &written in each 'load' .. which would be
   //       MUCH better than relying on some macros like this.
   fs->root = fs_file_load(buf + FS_FAT_SERIALIZE_SIZE(fs->fat) + 8);

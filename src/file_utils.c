@@ -80,11 +80,11 @@ int fs_utils_secs2str(int32_t secs, char* buf, int n)
   return written;
 }
 
-int fs_utils_filesize2str(int32_t bytes, char* buf, int n)
+int fs_utils_fsize2str(int32_t bytes, char* buf, int n)
 {
-  ASSERT(n >= FS_FILESIZE_FORMAT_SIZE,
+  ASSERT(n >= FS_FSIZE_FORMAT_SIZE,
          "`buf` must have at least %d available bytes. Has %d.",
-         FS_FILESIZE_FORMAT_SIZE, n);
+         FS_FSIZE_FORMAT_SIZE, n);
 
   const float t = 1024;
   uint8_t c = 0;
@@ -95,5 +95,6 @@ int fs_utils_filesize2str(int32_t bytes, char* buf, int n)
 
   ASSERT(c < 4, "Invalid byte size `%d`", bytes);
 
-  return snprintf(buf, n, "%5.1f%2s", b, FS_FILESIZE_UNITS[c]);
+  return snprintf(buf, n, FS_FSIZE_FORMAT, b, FS_FSIZE_UNITS[c]);
 }
+

@@ -108,9 +108,9 @@ void test5()
 void test6()
 {
   const char* expected = "123.0 B";
-  char buf[FS_FILESIZE_FORMAT_SIZE] = {0};
+  char buf[FS_FSIZE_FORMAT_SIZE] = {0};
 
-  fs_utils_filesize2str(123, buf, FS_FILESIZE_FORMAT_SIZE);
+  fs_utils_fsize2str(123, buf, FS_FSIZE_FORMAT_SIZE);
 
   ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
 }
@@ -118,9 +118,9 @@ void test6()
 void test7()
 {
   const char* expected = " 16.0KB";
-  char buf[FS_FILESIZE_FORMAT_SIZE] = {0};
+  char buf[FS_FSIZE_FORMAT_SIZE] = {0};
 
-  fs_utils_filesize2str(16*FS_KILOBYTE, buf, FS_FILESIZE_FORMAT_SIZE);
+  fs_utils_fsize2str(16*FS_KILOBYTE, buf, FS_FSIZE_FORMAT_SIZE);
 
   ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
 }
@@ -128,9 +128,9 @@ void test7()
 void test8()
 {
   const char* expected = "  2.3MB";
-  char buf[FS_FILESIZE_FORMAT_SIZE] = {0};
+  char buf[FS_FSIZE_FORMAT_SIZE] = {0};
 
-  fs_utils_filesize2str(2.3 * FS_MEGABYTE, buf, FS_FILESIZE_FORMAT_SIZE);
+  fs_utils_fsize2str(2.3 * FS_MEGABYTE, buf, FS_FSIZE_FORMAT_SIZE);
 
   ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
 }

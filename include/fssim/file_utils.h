@@ -9,7 +9,7 @@ int32_t fs_utils_gettime();
 int fs_utils_fsize(FILE* file);
 char** fs_utils_splitpath(const char* input, unsigned* size);
 int fs_utils_secs2str(int32_t secs, char* buf, int n);
-int fs_utils_filesize2str(int32_t secs, char* buf, int n);
+int fs_utils_fsize2str(int32_t secs, char* buf, int n);
 
 static int fs_utils_fexists(const char* fname)
 {

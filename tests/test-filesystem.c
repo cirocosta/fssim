@@ -32,19 +32,20 @@ void test3()
   // is_dir size last_modified name
   // TODO change TEMPO for a real time
   // TODO change 0 size to real size
-  const char* expected = "d 1 1969-12-31 21:00 .\n"
-                         "d 1 1969-12-31 21:00 ..\n";
-  char* buf = calloc(strlen(expected) + 1, sizeof(*buf));
+  const char* expected = "d   4.0KB 1969-12-31 21:00 .         \n"
+                         "d   4.0KB 1969-12-31 21:00 ..        \n";
+  const unsigned BUFSIZE = 512;
+  char* buf = calloc(BUFSIZE, sizeof(*buf));
   PASSERT(buf, FS_ERR_MALLOC);
 
-  memset(buf, '\0', strlen(expected) + 1);
+  memset(buf, '\0', BUFSIZE);
 
   fs_filesystem_t* fs = fs_filesystem_create(10);
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_ls(fs, "/", buf, strlen(expected) + 1);
+  fs_filesystem_ls(fs, "/", buf, BUFSIZE);
 
-  ASSERT(!strcmp(buf, expected), "%s != %s", buf, expected);
+  ASSERT(!strcmp(buf, expected), "\n`\n%s`\n != \n`\n%s`\n", buf, expected);
 
   fs_filesystem_destroy(fs);
   free(buf);
