@@ -238,6 +238,23 @@ Being serialized into and deserialized from:
 
 As a design decision, directories must fit in a single block (4KB) only. This limits each layer in the hierarchy tree to support a maximum of 127 entries (files or directories) as mentioned but directory nesting is only limited by disk limit.
 
+## Utilities
+
+### LS
+
+```
+           36 characters
+  |-----------------------------|
+    
+     %c    %7s    %16s    %10s
+  +-----+ +---+ +-------+ +----+
+  |     | |   | |       | |    |
+  is_dir  size  last_mod  fname
+```
+
+
+
+
 ## LICENSE
 
 MPLv2. See `LICENSE`.

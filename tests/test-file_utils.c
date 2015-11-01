@@ -95,12 +95,56 @@ void test4()
   free(buf);
 }
 
+void test5()
+{
+  const char* expected = "1969-12-31 21:00";
+  char buf[FS_DATE_FORMAT_SIZE] = { 0 };
+
+  fs_utils_secs2str(0, buf, FS_DATE_FORMAT_SIZE);
+
+  ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
+}
+
+void test6()
+{
+  const char* expected = "123.0 B";
+  char buf[FS_FILESIZE_FORMAT_SIZE] = {0};
+
+  fs_utils_filesize2str(123, buf, FS_FILESIZE_FORMAT_SIZE);
+
+  ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
+}
+
+void test7()
+{
+  const char* expected = " 16.0KB";
+  char buf[FS_FILESIZE_FORMAT_SIZE] = {0};
+
+  fs_utils_filesize2str(16*FS_KILOBYTE, buf, FS_FILESIZE_FORMAT_SIZE);
+
+  ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
+}
+
+void test8()
+{
+  const char* expected = "  2.3MB";
+  char buf[FS_FILESIZE_FORMAT_SIZE] = {0};
+
+  fs_utils_filesize2str(2.3 * FS_MEGABYTE, buf, FS_FILESIZE_FORMAT_SIZE);
+
+  ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "splits path accordingly");
   TEST(test2, "splits path accordingly");
   TEST(test3, "deals properly w/ uin32_t (de)serialization");
-  TEST(test3, "deals properly w/ in32_t (de)serialization");
+  TEST(test4, "deals properly w/ in32_t (de)serialization");
+  TEST(test5, "time utilities");
+  TEST(test6, "file size utilities - bytes");
+  TEST(test7, "file size utilities - KB");
+  TEST(test8, "file size utilities - megabytes");
 
   return 0;
 }

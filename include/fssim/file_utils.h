@@ -2,6 +2,14 @@
 #define FSSIM__FILE_UTILS_H
 
 #include "fssim/common.h"
+#include <sys/time.h>
+#include <time.h>
+
+int32_t fs_utils_gettime();
+int fs_utils_fsize(FILE* file);
+char** fs_utils_splitpath(const char* input, unsigned* size);
+int fs_utils_secs2str(int32_t secs, char* buf, int n);
+int fs_utils_filesize2str(int32_t secs, char* buf, int n);
 
 static int fs_utils_fexists(const char* fname)
 {
@@ -14,9 +22,6 @@ inline static void fs_utils_fdelete(const char* fname)
     PASSERT(!unlink(fname), "fdelete:");
   }
 }
-
-int fs_utils_fsize(FILE* file);
-char** fs_utils_splitpath(const char* input, unsigned* size);
 
 static inline unsigned char* serialize_uint32_t(unsigned char* buffer,
                                                 uint32_t value)

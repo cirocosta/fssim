@@ -32,8 +32,8 @@ void test3()
   // is_dir size last_modified name
   // TODO change TEMPO for a real time
   // TODO change 0 size to real size
-  const char* expected = "d 0 TEMPO .\n"
-                         "d 0 TEMPO ..\n";
+  const char* expected = "d 1 1969-12-31 21:00 .\n"
+                         "d 1 1969-12-31 21:00 ..\n";
   char* buf = calloc(strlen(expected) + 1, sizeof(*buf));
   PASSERT(buf, FS_ERR_MALLOC);
 

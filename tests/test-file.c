@@ -11,6 +11,7 @@ void test1()
   // TODO maybe this should actually be an empty linked list...
   ASSERT(file->children == NULL, "");
   ASSERT(file->children_count == 0, "");
+  ASSERT(file->attrs.size == 1, "");
 
   fs_file_destroy(file);
 }
