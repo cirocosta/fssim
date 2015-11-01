@@ -28,13 +28,9 @@ void test2()
 
 void test3()
 {
-  //
-  // is_dir size last_modified name
-  // TODO change TEMPO for a real time
-  // TODO change 0 size to real size
   const char* expected = "d   4.0KB 1969-12-31 21:00 .         \n"
                          "d   4.0KB 1969-12-31 21:00 ..        \n";
-  const unsigned BUFSIZE = 512;
+  const unsigned BUFSIZE = FS_LS_FORMAT_SIZE * 2;
   char* buf = calloc(BUFSIZE, sizeof(*buf));
   PASSERT(buf, FS_ERR_MALLOC);
 
@@ -141,6 +137,28 @@ void test7()
   free(buf);
 }
 
+void test8()
+{
+  const char* expected = "d   4.0KB 1969-12-31 21:00 .         \n"
+                         "d   4.0KB 1969-12-31 21:00 ..        \n"
+                         "f   4.0KB 1969-12-31 21:00 lol.txt   \n"
+                         "f   4.0KB 1969-12-31 21:00 hue.txt   \n";
+  const unsigned BUFSIZE = FS_LS_FORMAT_SIZE * 4;
+  char buf[BUFSIZE] = {0};
+
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_touch(fs, "hue.txt");
+  fs_filesystem_touch(fs, "lol.txt");
+  fs_filesystem_ls(fs, "/", buf, BUFSIZE);
+
+  ASSERT(!strcmp(buf, expected), "\n`\n%s`\n != \n`\n%s`\n", buf, expected);
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -150,6 +168,7 @@ int main(int argc, char* argv[])
   TEST(test5, "superblock serialization");
   TEST(test6, "full load w/ only root directory");
   TEST(test7, "full load w/ root + files");
+  TEST(test8, "ls - root w/ children");
 
   return 0;
 }

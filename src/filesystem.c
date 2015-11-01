@@ -83,6 +83,7 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   int written = 0;
   char mtime_buf[FS_DATE_FORMAT_SIZE] = { 0 };
   char fsize_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
+  fs_llist_t* child = fs->cwd->children;
 
   if (num_path_comp) { // we're not in the root
     // go to the correct location and then proceed
@@ -90,21 +91,32 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
     ASSERT(0, "not supported.");
   }
 
-  fs_utils_fsize2str(fs->root->attrs.size * FS_BLOCK_SIZE, fsize_buf,
+  fs_utils_fsize2str(fs->cwd->attrs.size * FS_BLOCK_SIZE, fsize_buf,
                      FS_FSIZE_FORMAT_SIZE);
-  fs_utils_secs2str(fs->root->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
+  fs_utils_secs2str(fs->cwd->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
 
-  written += snprintf(buf + written, n, FS_LS_FORMAT,
+  written += snprintf(buf + written, n - written, FS_LS_FORMAT,
                       fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
                       mtime_buf, ".");
 
-  written += snprintf(buf + written, n, FS_LS_FORMAT,
+  written += snprintf(buf + written, n - written, FS_LS_FORMAT,
                       fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
                       mtime_buf, "..");
 
-  // TODO
-  // parse directory file references by parsing
-  // the payload and inspecting the content.
+  while (child) {
+    // TODO separete this into a function (in file.h)
+    fs_file_t* file = (fs_file_t*)child->data;
+
+    fs_utils_fsize2str(file->attrs.size * FS_BLOCK_SIZE, fsize_buf,
+                       FS_FSIZE_FORMAT_SIZE);
+    fs_utils_secs2str(file->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
+
+    written += snprintf(buf + written, n, FS_LS_FORMAT,
+                        file->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
+                        mtime_buf, file->attrs.fname);
+
+    child = child->next;
+  }
 
   free(path);
 }
