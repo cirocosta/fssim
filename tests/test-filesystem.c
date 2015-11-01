@@ -112,6 +112,34 @@ void test6()
   free(buf);
 }
 
+void test7()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(16);
+  unsigned char* buf = calloc(512, sizeof(*buf));
+
+  PASSERT(buf, FS_ERR_MALLOC);
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_touch(fs, "lol.txt");
+  fs_filesystem_touch(fs, "lol2.txt");
+
+  fs_filesystem_serialize(fs, buf, 512);
+  fs_filesystem_t* fs2 = fs_filesystem_load(buf);
+
+  ASSERT(fs2->root->children_count == 2, "");
+  fs_file_t* f1 = (fs_file_t*)fs2->root->children->data; 
+  fs_file_t* f2 = (fs_file_t*)fs2->root->children->next->data; 
+
+  ASSERT(!strcmp(f1->attrs.fname, "lol.txt"), "");
+  ASSERT(!strcmp(f2->attrs.fname, "lol2.txt"), "");
+
+  fs_filesystem_destroy(fs);
+  fs_filesystem_destroy(fs2);
+  free(buf);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -120,6 +148,7 @@ int main(int argc, char* argv[])
   TEST(test4, "touch - creating a file in empty root");
   TEST(test5, "superblock serialization");
   TEST(test6, "full load w/ only root directory");
+  TEST(test7, "full load w/ root + files");
 
   return 0;
 }

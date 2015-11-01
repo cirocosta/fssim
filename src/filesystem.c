@@ -66,6 +66,7 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
   /* } */
 
   fs_file_t* f = fs_file_create(fname, FS_FILE_REGULAR, fs->cwd);
+
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
   f->fblock = fs_fat_addfile(fs->fat);
