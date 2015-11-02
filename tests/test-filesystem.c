@@ -91,7 +91,9 @@ void test6()
 
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   fs_filesystem_serialize(fs, buf, 512);
-  fs_filesystem_t* fs2 = fs_filesystem_load(buf);
+
+  fs_filesystem_t* fs2 = fs_filesystem_create(0);
+  fs_filesystem_load(fs2, buf);
 
   ASSERT(fs2->blocks_num == fs->blocks_num, "%lu != %lu", fs2->blocks_num,
          fs->blocks_num);
@@ -123,7 +125,9 @@ void test7()
   fs_filesystem_touch(fs, "lol2.txt");
 
   fs_filesystem_serialize(fs, buf, 512);
-  fs_filesystem_t* fs2 = fs_filesystem_load(buf);
+
+  fs_filesystem_t* fs2 = fs_filesystem_create(0);
+  fs_filesystem_load(fs2, buf);
 
   ASSERT(fs2->root->children_count == 2, "");
   fs_file_t* f1 = (fs_file_t*)fs2->root->children->data;
@@ -203,7 +207,6 @@ void test9()
 
 /*   ASSERT(fs_filesystem_find(fs, "/", FNAME), "file must be present"); */
 
-
 /*   fs_filesystem_destroy(fs); */
 /* } */
 
@@ -223,6 +226,23 @@ void test11()
   fs_filesystem_destroy(fs);
 }
 
+void test12()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_destroy(fs);
+
+  // 10 is a hint about the number of blocks
+  fs_filesystem_t* fs2 = fs_filesystem_create(10);
+  fs_filesystem_mount(fs2, FS_TEST_FNAME);
+
+  ASSERT(fs2->blocks_num == 10, "");
+  ASSERT(fs2->block_size == 4096, "");
+
+  fs_filesystem_destroy(fs2);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -234,8 +254,9 @@ int main(int argc, char* argv[])
   TEST(test7, "full load w/ root + files");
   TEST(test8, "ls - root w/ children");
   TEST(test9, "find - check for file in current layer");
-  /* TEST(test10, "cp - copy from real fs to sim"); */
   TEST(test11, "rm - remove file");
+  TEST(test12, "mount - file persistence");
+  /* TEST(test10, "cp - copy from real fs to sim"); */
 
   return 0;
 }

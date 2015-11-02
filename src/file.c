@@ -35,10 +35,10 @@ void fs_file_destroy(fs_file_t* file)
 // TODO test this following w/ a proper load()
 int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
 {
-  int to_write = file->children_count * 32;
-  ASSERT(n >= (file->children_count * 32), 
-         "`buf` must at least have %u bytes remaining",
-         file->children_count * 32);
+  int to_write = 32 + file->children_count * 32;
+
+  ASSERT(n >= to_write, "`buf` must at least have %u bytes remaining",
+         to_write);
 
   fs_llist_t* tmp = file->children;
   fs_file_t* curr_file = NULL;

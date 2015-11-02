@@ -174,6 +174,12 @@ n*4              |  FAT                    |  File Alloc
 4KB              |  Block N                |
                  |                         |
 ------------------                         --
+
+
+              Stays in memory:
+/-----------------------------------------/
+SuperBlock + FAT + BMP = 8 + 4n + ceil(n/8)
+/-----------------------------------------/
 ```
 
 As we're dealing with >1 byte numbers we have to also care about endianess (as computer  do not agree on MSB). Don't forget to use `htonl` and `ntohl` when (de)serializing numbers from the block char (we're always going with uint32_t, which is fine).

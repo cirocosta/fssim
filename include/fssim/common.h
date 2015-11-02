@@ -1,6 +1,9 @@
 #ifndef FSSIM_COMMON_H
 #define FSSIM_COMMON_H
 
+#define KGRN "\x1B[32m"
+#define KRESET "\033[0m"
+
 #define CHECK_RBIT(__var, __pos) ((__var) & (1 << (__pos)))
 #define CHECK_LBIT(__var, __pos) ((__var) & (128 >> (__pos)))
 #define SET_LBIT(__var, __pos)                                                 \
@@ -23,6 +26,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#define __FILENAME__                                                           \
+  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 #define FREE(__ptr)                                                            \
   do {                                                                         \
@@ -73,10 +79,11 @@
 
 #define TEST(__test, ...)                                                      \
   do {                                                                         \
-    LOG("RUN\t%s: %s:" #__VA_ARGS__, __BASE_FILE__, #__test);                  \
+    LOG("RUN\t%s: %s:" #__VA_ARGS__, __FILENAME__, #__test);                   \
     fflush(stdout);                                                            \
     __test();                                                                  \
-    LOG("OK\t\t%s: %s:" #__VA_ARGS__, __BASE_FILE__, #__test);                 \
+    LOG("OK\t\t%s: %s%s%s:" #__VA_ARGS__, __FILENAME__, KGRN, #__test,         \
+        KRESET);                                                               \
     fflush(stdout);                                                            \
   } while (0)
 

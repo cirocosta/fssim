@@ -4,6 +4,7 @@
 #include "fssim/common.h"
 #include <stdint.h>
 
+#define FS_BUFSIZE 4096
 #define FS_KILOBYTE 1024
 #define FS_MEGABYTE 1024 * FS_KILOBYTE
 
