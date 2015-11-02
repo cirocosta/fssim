@@ -182,7 +182,7 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
   // TODO split 'root' path, get there (if exists)
   //      and then perform the lookup
 
-  if (!child) 
+  if (!child)
     return NULL;
 
   return (fs_file_t*)child->data;

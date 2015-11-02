@@ -108,7 +108,7 @@ void test5()
 void test6()
 {
   const char* expected = "123.0 B";
-  char buf[FS_FSIZE_FORMAT_SIZE] = {0};
+  char buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
 
   fs_utils_fsize2str(123, buf, FS_FSIZE_FORMAT_SIZE);
 
@@ -118,9 +118,9 @@ void test6()
 void test7()
 {
   const char* expected = " 16.0KB";
-  char buf[FS_FSIZE_FORMAT_SIZE] = {0};
+  char buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
 
-  fs_utils_fsize2str(16*FS_KILOBYTE, buf, FS_FSIZE_FORMAT_SIZE);
+  fs_utils_fsize2str(16 * FS_KILOBYTE, buf, FS_FSIZE_FORMAT_SIZE);
 
   ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
 }
@@ -128,11 +128,24 @@ void test7()
 void test8()
 {
   const char* expected = "  2.3MB";
-  char buf[FS_FSIZE_FORMAT_SIZE] = {0};
+  char buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
 
   fs_utils_fsize2str(2.3 * FS_MEGABYTE, buf, FS_FSIZE_FORMAT_SIZE);
 
   ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
+}
+
+void test9()
+{
+  const char* FNAME = "test9-file";
+
+  fs_utils_fdelete(FNAME);
+  FILE* f = fs_utils_mkfile(FNAME, 100 * FS_MEGABYTE);
+
+  ASSERT(f, "");
+  ASSERT(fs_utils_fsize(f) == 100 * FS_MEGABYTE,
+         "file must have the correct size");
+  PASSERT(!fclose(f), "fclose:");
 }
 
 int main(int argc, char* argv[])
@@ -142,9 +155,10 @@ int main(int argc, char* argv[])
   TEST(test3, "deals properly w/ uin32_t (de)serialization");
   TEST(test4, "deals properly w/ in32_t (de)serialization");
   TEST(test5, "time utilities");
-  TEST(test6, "file size utilities - bytes");
-  TEST(test7, "file size utilities - KB");
-  TEST(test8, "file size utilities - megabytes");
+  TEST(test6, "human file size utilities - bytes");
+  TEST(test7, "human file size utilities - KB");
+  TEST(test8, "human file size utilities - megabytes");
+  TEST(test9, "file allocation");
 
   return 0;
 }

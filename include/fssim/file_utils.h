@@ -10,6 +10,7 @@ int fs_utils_fsize(FILE* file);
 char** fs_utils_splitpath(const char* input, unsigned* size);
 int fs_utils_secs2str(int32_t secs, char* buf, int n);
 int fs_utils_fsize2str(int32_t secs, char* buf, int n);
+FILE* fs_utils_mkfile(const char* fname, size_t size);
 
 static int fs_utils_fexists(const char* fname)
 {

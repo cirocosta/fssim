@@ -14,6 +14,17 @@ int fs_utils_fsize(FILE* file)
   return size;
 }
 
+FILE* fs_utils_mkfile(const char* fname, size_t size)
+{
+  FILE* file = fopen(fname, "wb+");
+
+  PASSERT(file, "open");
+  PASSERT(!posix_fallocate(fileno(file), 0, size), "posix_fallocate:");
+
+  return file;
+}
+
+
 char** fs_utils_splitpath(const char* input, unsigned* size)
 {
   const char delimiter = '/';
@@ -97,4 +108,3 @@ int fs_utils_fsize2str(int32_t bytes, char* buf, int n)
 
   return snprintf(buf, n, FS_FSIZE_FORMAT, b, FS_FSIZE_UNITS[c]);
 }
-
