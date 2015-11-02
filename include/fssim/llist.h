@@ -3,7 +3,7 @@
 
 #include "fssim/common.h"
 
-typedef void (*fs_llist_destructor)(void*);
+typedef void (*fs_llist_func)(void* data);
 
 typedef struct fs_llist_t {
   struct fs_llist_t* next;
@@ -11,14 +11,14 @@ typedef struct fs_llist_t {
 } fs_llist_t;
 
 /**
- * Creates a llist.
+ * Creates a list.
  */
 fs_llist_t* fs_llist_create(void* data);
 
 /**
- * Destroys a list
+ * Destroys an entire list
  */
-void fs_llist_destroy(fs_llist_t* list, fs_llist_destructor destructor);
+void fs_llist_destroy(fs_llist_t* list, fs_llist_func destructor);
 
 /**
  * Removes the list from the others
@@ -28,6 +28,8 @@ void fs_llist_destroy(fs_llist_t* list, fs_llist_destructor destructor);
  *  (c)->(d)->NIL
  */
 void fs_llist_remove_next(fs_llist_t* list);
+
+int fs_llist_remove(fs_llist_t* a, fs_llist_t* b);
 
 /**
  * Appends list `b` to list `a`

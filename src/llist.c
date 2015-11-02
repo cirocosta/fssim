@@ -11,7 +11,7 @@ fs_llist_t* fs_llist_create(void* data)
   return list;
 }
 
-void fs_llist_destroy(fs_llist_t* list, fs_llist_destructor destructor)
+void fs_llist_destroy(fs_llist_t* list, fs_llist_func destructor)
 {
   fs_llist_t* next;
 
@@ -41,4 +41,20 @@ fs_llist_t* fs_llist_append(fs_llist_t* a, fs_llist_t* b)
   return a;
 }
 
-void fs_llist_remove(fs_llist_t* list) { list->next = NULL; }
+int fs_llist_remove(fs_llist_t* a, fs_llist_t* b)
+{
+  fs_llist_t* tmp = a;
+
+  while (tmp->next != NULL) {
+    if (tmp->next != b) {
+      tmp = tmp->next;
+      continue;
+    }
+
+    tmp->next = b->next;
+    b->next = NULL;
+    return 1;
+  }
+
+  return 0;
+}

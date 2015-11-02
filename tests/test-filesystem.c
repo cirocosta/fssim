@@ -126,8 +126,8 @@ void test7()
   fs_filesystem_t* fs2 = fs_filesystem_load(buf);
 
   ASSERT(fs2->root->children_count == 2, "");
-  fs_file_t* f1 = (fs_file_t*)fs2->root->children->data; 
-  fs_file_t* f2 = (fs_file_t*)fs2->root->children->next->data; 
+  fs_file_t* f1 = (fs_file_t*)fs2->root->children->data;
+  fs_file_t* f2 = (fs_file_t*)fs2->root->children->next->data;
 
   ASSERT(!strcmp(f1->attrs.fname, "lol.txt"), "");
   ASSERT(!strcmp(f2->attrs.fname, "lol2.txt"), "");
@@ -144,7 +144,7 @@ void test8()
                          "f   4.0KB 1969-12-31 21:00 lol.txt   \n"
                          "f   4.0KB 1969-12-31 21:00 hue.txt   \n";
   const unsigned BUFSIZE = FS_LS_FORMAT_SIZE * 4;
-  char buf[BUFSIZE] = {0};
+  char buf[BUFSIZE] = { 0 };
 
   fs_filesystem_t* fs = fs_filesystem_create(10);
   fs_utils_fdelete(FS_TEST_FNAME);
@@ -159,6 +159,70 @@ void test8()
   fs_filesystem_destroy(fs);
 }
 
+static void _write_dumb_file(const char* fname, size_t size)
+{
+  FILE* file = NULL;
+  char* buf = calloc(size, sizeof(*buf));
+
+  memset(buf, 0xff, size);
+
+  PASSERT((file = fopen(fname, "w")), "fopen:");
+  PASSERT(fwrite(buf, sizeof(*buf), size, file) > 0, "fwrite:");
+  PASSERT(fclose(file) == 0, "fclose error:");
+
+  free(buf);
+}
+
+void test9()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_touch(fs, "hue.txt");
+  fs_filesystem_touch(fs, "lol.txt");
+
+  fs_file_t* file = fs_filesystem_find(fs, "/", "hue.txt");
+
+  ASSERT(file, "file must be found");
+  ASSERT(!strcmp(file->attrs.fname, "hue.txt"), "file must be found");
+  ASSERT(!fs_filesystem_find(fs, "/", "NOT_FOUND.txt"), "file must be found");
+
+  fs_filesystem_destroy(fs);
+}
+
+/* void test10() */
+/* { */
+/*   const char* FNAME = "test9-file"; */
+/*   fs_filesystem_t* fs = fs_filesystem_create(10); */
+/*   _write_dumb_file(FNAME, 1 * FS_KILOBYTE); */
+
+/*   fs_utils_fdelete(FS_TEST_FNAME); */
+/*   fs_filesystem_mount(fs, FS_TEST_FNAME); */
+/*   fs_filesystem_cp(fs, FNAME, FNAME); */
+
+/*   ASSERT(fs_filesystem_find(fs, "/", FNAME), "file must be present"); */
+
+
+/*   fs_filesystem_destroy(fs); */
+/* } */
+
+void test11()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_touch(fs, "hue.txt");
+  fs_filesystem_touch(fs, "lol.txt");
+
+  ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
+  ASSERT(fs_filesystem_rm(fs, "hue.txt"), "");
+  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there anymore!");
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -169,6 +233,9 @@ int main(int argc, char* argv[])
   TEST(test6, "full load w/ only root directory");
   TEST(test7, "full load w/ root + files");
   TEST(test8, "ls - root w/ children");
+  TEST(test9, "find - check for file in current layer");
+  /* TEST(test10, "cp - copy from real fs to sim"); */
+  TEST(test11, "rm - remove file");
 
   return 0;
 }

@@ -158,3 +158,59 @@ fs_filesystem_t* fs_filesystem_load(unsigned char* buf)
 
   return fs;
 }
+
+static fs_llist_t* _find_file(fs_filesystem_t* fs, const char* fname)
+{
+  fs_llist_t* child = fs->cwd->children;
+
+  while (child) {
+    if (!strcmp(((fs_file_t*)child->data)->attrs.fname, fname))
+      return child;
+
+    child = child->next;
+  }
+
+  return NULL;
+}
+
+fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
+                              const char* fname)
+{
+  fs_llist_t* child = _find_file(fs, fname);
+  fs_file_t* curr_file = NULL;
+
+  // TODO split 'root' path, get there (if exists)
+  //      and then perform the lookup
+
+  if (!child) 
+    return NULL;
+
+  return (fs_file_t*)child->data;
+}
+
+/* fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src, */
+/*                             const char* dest) */
+/* { */
+// open src
+// calculate size (fseek & ftell)
+// calculate # of blocks needed
+// assert we have space for that
+// grab those blocks
+// (loop): read BUFSIZE, persist bytes readed
+// assert we handled all bytes accordingly
+// return fs_file_t* corresponding to the file
+/* } */
+
+int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
+{
+  // TODO split path and get to the directory
+  fs_llist_t* child = _find_file(fs, path);
+
+  if (!child)
+    return 0;
+
+  fs_llist_remove(fs->cwd->children, child);
+  fs_llist_destroy(child, fs_file_destructor);
+
+  return 1;
+}

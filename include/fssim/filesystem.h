@@ -23,7 +23,12 @@ void fs_filesystem_destroy(fs_filesystem_t* fs);
 void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname);
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n);
+fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
+                              const char* fname);
+fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
+                            const char* dest);
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname);
+int fs_filesystem_rm(fs_filesystem_t* fs, const char* path);
 
 // TODO
 void fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n);
