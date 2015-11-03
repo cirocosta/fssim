@@ -85,10 +85,23 @@ void test4()
   fs_llist_destroy(list3, NULL);
 }
 
+void test5()
+{
+  int value1 = 1;
+
+  fs_llist_t* list1 = fs_llist_create(&value1);
+
+  ASSERT(fs_llist_remove(list1, list1), "");
+  ASSERT(list1->next == NULL, "");
+
+  fs_llist_destroy(list1, NULL);
+}
+
 int main(int argc, char *argv[]) { 
   TEST(test1, "creation w/ single stacked data") ;
   TEST(test2, "append multiple stacked data") ;
   TEST(test3, "destroy with destructor") ;
   TEST(test4, "remove in the middle") ;
+  TEST(test5, "remove sole file") ;
   
   return 0; }

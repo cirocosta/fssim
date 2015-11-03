@@ -165,7 +165,15 @@ void test11()
   fs_filesystem_destroy(fs);
 }
 
-void test12()
+// 1. initializes an empty fs and then closes it
+// 2. opens the last state of the fs (empty),
+//    adds a file and then closes it.
+// 3. opens the last state of the fs (not empty),
+//    verifies that the file is present, then removes
+//    it
+// 4. opens the last state of the fs (empty again)
+//    and verifies that it is indeed empty.
+void test13()
 {
   // fs
   fs_filesystem_t* fs = fs_filesystem_create(10);
@@ -201,6 +209,40 @@ void test12()
   ASSERT(fs->root->children_count == 1, "");
   ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file correctly retained");
 
+  ASSERT(fs_filesystem_rm(fs, "hue.txt"), "file removed properly");
+  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"),
+         "the file isn't there anymore!");
+  fs_filesystem_destroy(fs);
+  fs = NULL;
+
+  // fs2
+  fs2 = fs_filesystem_create(0);
+  fs_filesystem_mount(fs2, FS_TEST_FNAME);
+
+  ASSERT(fs2->root->children_count == 0, "");
+  ASSERT(!fs_filesystem_find(fs2, "/", "hue.txt"),
+         "last added file correctly not there anymore");
+
+  fs_filesystem_destroy(fs2);
+  fs2 = NULL;
+}
+
+void test12()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there!");
+
+  fs_filesystem_touch(fs, "hue.txt");
+
+  ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
+  ASSERT(fs_filesystem_rm(fs, "hue.txt"), "");
+  ASSERT(fs->root->children_count == 0, "empty root!");
+  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there anymore!");
+
   fs_filesystem_destroy(fs);
 }
 
@@ -214,7 +256,8 @@ int main(int argc, char* argv[])
   TEST(test8, "ls - root w/ children");
   TEST(test9, "find - check for file in current layer");
   TEST(test11, "rm - remove file");
-  TEST(test12, "mount - file persistence - single level");
+  TEST(test12, "rm - add and remove sole file");
+  TEST(test13, "mount - file persistence - single level");
   /* TEST(test10, "cp - copy from real fs to sim"); */
 
   return 0;

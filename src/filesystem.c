@@ -133,8 +133,7 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
           "fseek: ");
   n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
   PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
-
-  fflush(fs->file);
+  PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   return f;
 }
@@ -248,6 +247,8 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
   // TODO split 'root' path, get there (if exists)
   //      and then perform the lookup
 
+  LOGERR("child found = %c", child != NULL ? 'y' : 'n');
+
   if (!child)
     return NULL;
 
@@ -257,6 +258,8 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
 int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
 {
   // TODO split path and get to the directory
+  int n = 0;
+  uint8_t block_buf[FS_BLOCK_SIZE] = {0};
   fs_llist_t* child = _find_file(fs, path);
 
   if (!child)
@@ -264,10 +267,18 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
 
   fs_llist_remove(fs->cwd->children, child);
   fs_llist_destroy(child, fs_file_destructor);
+  fs->cwd->children_count--;
 
-  // +---------+
-  // | PERSIST |
-  // +---------+
+  if (!fs->cwd->children_count)
+    fs->cwd->children = NULL;
+
+  PASSERT(~fseek(fs->file,
+                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
+                 SEEK_SET),
+          "fseek: ");
+  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+  PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   return 1;
 }

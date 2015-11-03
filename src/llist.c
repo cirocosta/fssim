@@ -45,6 +45,9 @@ int fs_llist_remove(fs_llist_t* a, fs_llist_t* b)
 {
   fs_llist_t* tmp = a;
 
+  if (a == b)
+    return 1;
+
   while (tmp->next != NULL) {
     if (tmp->next != b) {
       tmp = tmp->next;
