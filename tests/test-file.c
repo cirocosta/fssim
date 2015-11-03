@@ -64,6 +64,7 @@ void test4()
   fs_file_addchild(dir, file2);
 
   fs_file_serialize_dir(dir, buf, 512);
+
   fs_file_t* dir2 = fs_file_load(buf);
 
   ASSERT(dir2->children_count == 2, "");
@@ -76,7 +77,6 @@ void test4()
 
   ASSERT(!strcmp(dir2_child2->attrs.fname, "other.scm"), "");
   ASSERT(dir2_child2->attrs.is_directory == 0, "");
-
 
   fs_file_destroy(dir);
   fs_file_destroy(dir2);

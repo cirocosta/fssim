@@ -5,14 +5,10 @@ fs_filesystem_t* fs_filesystem_create(size_t blocks)
   fs_filesystem_t* fs = malloc(sizeof(*fs));
   PASSERT(fs, FS_ERR_MALLOC);
 
+  *fs = fs_zeroed_filesystem;
+
   fs->blocks_num = blocks;
   fs->block_size = FS_BLOCK_SIZE;
-
-  fs->fat = NULL;
-  fs->root = NULL;
-  fs->cwd = NULL;
-  fs->file = NULL;
-  fs->buf = NULL;
 
   return fs;
 }
@@ -42,56 +38,77 @@ void fs_filesystem_destroy(fs_filesystem_t* fs)
   free(fs);
 }
 
-void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
+static inline void fs_filesystem_mount_new(fs_filesystem_t* fs,
+                                           const char* fname)
 {
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   fs_file_t* parent = NULL;
   size_t n = 0;
 
-  if (!fs_utils_fexists(fname)) {
-    // bcount | bsize | fat | bmp | rootdir
-    size_t bytes_in_memory =
-        (8 + 4 * fs->blocks_num + (fs->blocks_num / 8) | 0) + 4096;
-    LOGERR("bytes in mem = %lu", bytes_in_memory);
-    fs->file = fs_utils_mkfile(fname, fs->blocks_num * fs->block_size);
-    fs->fat = fs_fat_create(fs->blocks_num);
-    fs->root = fs_file_create("/", FS_FILE_DIRECTORY, parent);
-    fs->cwd = fs->root;
-    fs->root->fblock = fs_fat_addfile(fs->fat);
-    fs->buf = calloc(bytes_in_memory, sizeof(*fs->buf));
+  // bcount | bsize | fat | bmp
+  fs->file = fs_utils_mkfile(fname, fs->blocks_num * fs->block_size);
+  fs->fat = fs_fat_create(fs->blocks_num);
+  fs->root = fs_file_create("/", FS_FILE_DIRECTORY, parent);
+  fs->cwd = fs->root;
+  fs->root->fblock = fs_fat_addfile(fs->fat);
+  fs->blocks_offset = 8 + 4 * fs->blocks_num + fs->fat->bmp->size;
 
-    PASSERT(fs->buf, FS_ERR_MALLOC);
-    n = fs_filesystem_serialize(fs, fs->buf, bytes_in_memory);
-    fwrite(fs->buf, sizeof(uint8_t), n, fs->file);
+  fs->buf = calloc(fs->blocks_offset, sizeof(*fs->buf));
+  PASSERT(fs->buf, FS_ERR_MALLOC);
 
-    return;
-  }
+  // put in memory SB+FAT+BMP and persist
+  // start of the file
+  n = fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
+  fseek(fs->file, 0, SEEK_SET);
+  PASSERT(fwrite(fs->buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
 
+  // persist root directory
+  // compute the correct position and write
+  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
+  fseek(fs->file, fs->blocks_offset + FS_BLOCK_SIZE * fs->cwd->fblock,
+        SEEK_SET);
+  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
+
+  return;
+}
+static inline void fs_filesystem_mount_existing(fs_filesystem_t* fs,
+                                                const char* fname)
+{
+  fs_file_t* parent = NULL;
+  size_t n = 0;
   uint8_t tmp_buf[8] = { 0 };
-  size_t to_read = 8;
 
-  fs->file = fopen(fname, "r+b");
-  PASSERT(fs->file, "fopen (r+b): ");
+  PASSERT((fs->file = fopen(fname, "r+b")), "fopen (r+b): ");
 
-  while (n < to_read)
+  while (n < 8)
     n += fread(tmp_buf, sizeof(uint8_t), 8, fs->file);
-  PASSERT(~n && n == to_read, "fread error: ");
+  PASSERT(~n, "fread error: ");
 
   fs->block_size = deserialize_uint32_t(tmp_buf);     // 4B
   fs->blocks_num = deserialize_uint32_t(tmp_buf + 4); // 4B
+  fs->blocks_offset =
+      8 + 4 * fs->blocks_num + ((fs->blocks_num - 1) / 8 | 0) + 1;
 
-  // we're broadening this too much.
-  to_read = (8 + 4 * fs->blocks_num + (fs->blocks_num / 8) | 0) + 4096;
   n = 0;
 
-  fs->buf = calloc(to_read, sizeof(*fs->buf));
+  fs->buf = calloc(fs->blocks_offset, sizeof(*fs->buf));
   PASSERT(fs->buf, FS_ERR_MALLOC);
 
-  fseek(fs->file, SEEK_SET, 0);
-  while (n < to_read)
-    n += fread(fs->buf + n, sizeof(uint8_t), to_read, fs->file);
-  PASSERT(~n && n == to_read, "fread error: ");
+  fseek(fs->file, 0, SEEK_SET);
+  while (n < fs->blocks_offset)
+    n += fread(fs->buf + n, sizeof(uint8_t), fs->blocks_offset, fs->file);
+  PASSERT(~n && n == fs->blocks_offset, "fread error: ");
 
-  fs_filesystem_load(fs, fs->buf);
+  fs_filesystem_load(fs);
+}
+
+void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
+{
+
+  if (!fs_utils_fexists(fname))
+    fs_filesystem_mount_new(fs, fname);
+  else
+    fs_filesystem_mount_existing(fs, fname);
 }
 
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
@@ -100,15 +117,24 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
   /* if (fs_utils_fexists(fname)) { */
   /* } */
 
+  int n = 0;
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   fs_file_t* f = fs_file_create(fname, FS_FILE_REGULAR, fs->cwd);
 
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
   f->fblock = fs_fat_addfile(fs->fat);
 
-  // +---------+
-  // | PERSIST |
-  // +---------+
+  // persist updated directory entry
+  // compute the correct position and write over
+  PASSERT(~fseek(fs->file,
+                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
+                 SEEK_SET),
+          "fseek: ");
+  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+
+  fflush(fs->file);
 
   return f;
 }
@@ -176,25 +202,27 @@ int fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n)
 
   written += fs_filesystem_serialize_superblock(fs, buf, n);
   written += fs_fat_serialize(fs->fat, buf + written, n - written);
-  written += fs_file_serialize_dir(fs->root, buf + written, n - written);
-
-  // TODO serialize files and stuff
 
   return written;
 }
 
-void fs_filesystem_load(fs_filesystem_t* fs, unsigned char* buf)
+void fs_filesystem_load(fs_filesystem_t* fs)
 {
-  uint32_t block_size = deserialize_uint32_t(buf); // 4B
-  uint32_t blocks = deserialize_uint32_t(buf + 4); // 4B
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
+  int n = 0;
 
-  fs->blocks_num = blocks;
-  fs->block_size = block_size;
-  fs->fat = fs_fat_load(buf + 8, blocks); // N*4 bytes
+  fs->block_size = deserialize_uint32_t(fs->buf);
+  fs->blocks_num = deserialize_uint32_t(fs->buf + 4);
+  fs->fat = fs_fat_load(fs->buf + 8, fs->blocks_num);
 
-  // FIXME maybe we could pass &written in each 'load' .. which would be
-  //       MUCH better than relying on some macros like this.
-  fs->root = fs_file_load(buf + FS_FAT_SERIALIZE_SIZE(fs->fat) + 8);
+  // read the first block in disk
+  fseek(fs->file, fs->blocks_offset, SEEK_SET);
+  while (n < FS_BLOCK_SIZE)
+    n += fread(block_buf, sizeof(uint8_t), FS_BLOCK_SIZE, fs->file);
+  PASSERT(~n, "fread error: ");
+
+  fs->root = fs_file_load(block_buf);
+  fs->cwd = fs->root;
 }
 
 static fs_llist_t* _find_file(fs_filesystem_t* fs, const char* fname)
@@ -225,19 +253,6 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
 
   return (fs_file_t*)child->data;
 }
-
-/* fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src, */
-/*                             const char* dest) */
-/* { */
-// open src
-// calculate size (fseek & ftell)
-// calculate # of blocks needed
-// assert we have space for that
-// grab those blocks
-// (loop): read BUFSIZE, persist bytes readed
-// assert we handled all bytes accordingly
-// return fs_file_t* corresponding to the file
-/* } */
 
 int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
 {

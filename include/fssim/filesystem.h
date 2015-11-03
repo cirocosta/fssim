@@ -16,10 +16,13 @@ typedef struct fs_filesystem_t {
   FILE* file;
   uint8_t* buf;
 
+  int32_t blocks_offset;
 } fs_filesystem_t;
 
+const static fs_filesystem_t fs_zeroed_filesystem = {0};
+
 fs_filesystem_t* fs_filesystem_create(size_t blocks);
-void fs_filesystem_load(fs_filesystem_t* fs, unsigned char* buf);
+void fs_filesystem_load(fs_filesystem_t* fs);
 void fs_filesystem_destroy(fs_filesystem_t* fs);
 
 void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname);

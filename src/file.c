@@ -37,8 +37,8 @@ int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
 {
   int to_write = 32 + file->children_count * 32;
 
-  ASSERT(n >= to_write, "`buf` must at least have %u bytes remaining",
-         to_write);
+  ASSERT(n >= to_write, "`buf` must at least have %u bytes remaining. Has %d",
+         to_write, n);
 
   fs_llist_t* tmp = file->children;
   fs_file_t* curr_file = NULL;
@@ -78,6 +78,7 @@ fs_file_t* fs_file_load(unsigned char* buf)
 
   *file = fs_zeroed_file;
   file->attrs = fs_zeroed_file_attrs;
+
 
   children_count = deserialize_uint8_t(buf);
   file->attrs.is_directory = 1;

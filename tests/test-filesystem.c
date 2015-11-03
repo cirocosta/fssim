@@ -80,67 +80,6 @@ void test5()
   free(buf);
 }
 
-void test6()
-{
-  fs_filesystem_t* fs = fs_filesystem_create(16);
-  unsigned char* buf = calloc(512, sizeof(*buf));
-
-  PASSERT(buf, FS_ERR_MALLOC);
-
-  fs_utils_fdelete(FS_TEST_FNAME);
-
-  fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_serialize(fs, buf, 512);
-
-  fs_filesystem_t* fs2 = fs_filesystem_create(0);
-  fs_filesystem_load(fs2, buf);
-
-  ASSERT(fs2->blocks_num == fs->blocks_num, "%lu != %lu", fs2->blocks_num,
-         fs->blocks_num);
-  ASSERT(fs2->block_size == fs->block_size, "");
-  ASSERT(fs2->root->attrs.is_directory == 1, "");
-  ASSERT(fs2->root->fblock == fs->root->fblock, "");
-  ASSERT(fs2->root->children_count == fs->root->children_count, "");
-
-  // TODO we need a way of deciding during the `file_load' time that
-  //      we're dealing with the root directory
-  /* ASSERT(!strcmp(fs2->root->attrs.fname, fs->root->attrs.fname), ""); */
-
-  fs_filesystem_destroy(fs);
-  fs_filesystem_destroy(fs2);
-  free(buf);
-}
-
-void test7()
-{
-  fs_filesystem_t* fs = fs_filesystem_create(16);
-  unsigned char* buf = calloc(512, sizeof(*buf));
-
-  PASSERT(buf, FS_ERR_MALLOC);
-
-  fs_utils_fdelete(FS_TEST_FNAME);
-
-  fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_touch(fs, "lol.txt");
-  fs_filesystem_touch(fs, "lol2.txt");
-
-  fs_filesystem_serialize(fs, buf, 512);
-
-  fs_filesystem_t* fs2 = fs_filesystem_create(0);
-  fs_filesystem_load(fs2, buf);
-
-  ASSERT(fs2->root->children_count == 2, "");
-  fs_file_t* f1 = (fs_file_t*)fs2->root->children->data;
-  fs_file_t* f2 = (fs_file_t*)fs2->root->children->next->data;
-
-  ASSERT(!strcmp(f1->attrs.fname, "lol.txt"), "");
-  ASSERT(!strcmp(f2->attrs.fname, "lol2.txt"), "");
-
-  fs_filesystem_destroy(fs);
-  fs_filesystem_destroy(fs2);
-  free(buf);
-}
-
 void test8()
 {
   const char* expected = "d   4.0KB 1969-12-31 21:00 .         \n"
@@ -228,19 +167,41 @@ void test11()
 
 void test12()
 {
+  // fs
   fs_filesystem_t* fs = fs_filesystem_create(10);
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
+  ASSERT(fs->root->children_count == 0, "");
   fs_filesystem_destroy(fs);
+  fs = NULL;
 
-  // 10 is a hint about the number of blocks
-  fs_filesystem_t* fs2 = fs_filesystem_create(10);
+  // fs2
+  fs_filesystem_t* fs2 = fs_filesystem_create(0);
   fs_filesystem_mount(fs2, FS_TEST_FNAME);
 
   ASSERT(fs2->blocks_num == 10, "");
   ASSERT(fs2->block_size == 4096, "");
+  ASSERT(fs_filesystem_find(fs2, "/", "hue.txt") == NULL, "file is not there");
+  ASSERT(fs2->root->children_count == 0, "");
+
+  fs_filesystem_touch(fs2, "hue.txt");
+
+  ASSERT(fs2->root->children_count == 1, "");
+  ASSERT(fs_filesystem_find(fs2, "/", "hue.txt"), "now the file is :D");
 
   fs_filesystem_destroy(fs2);
+  fs2 = NULL;
+
+  // fs
+  fs = fs_filesystem_create(0);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  ASSERT(fs->blocks_num == 10, "");
+  ASSERT(fs->block_size == 4096, "");
+
+  ASSERT(fs->root->children_count == 1, "");
+  ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file correctly retained");
+
+  fs_filesystem_destroy(fs);
 }
 
 int main(int argc, char* argv[])
@@ -250,12 +211,10 @@ int main(int argc, char* argv[])
   TEST(test3, "ls - list empty root dir");
   TEST(test4, "touch - creating a file in empty root");
   TEST(test5, "superblock serialization");
-  TEST(test6, "full load w/ only root directory");
-  TEST(test7, "full load w/ root + files");
   TEST(test8, "ls - root w/ children");
   TEST(test9, "find - check for file in current layer");
   TEST(test11, "rm - remove file");
-  TEST(test12, "mount - file persistence");
+  TEST(test12, "mount - file persistence - single level");
   /* TEST(test10, "cp - copy from real fs to sim"); */
 
   return 0;
