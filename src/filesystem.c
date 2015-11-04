@@ -155,8 +155,7 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
     ASSERT(0, "not supported.");
   }
 
-  fs_utils_fsize2str(fs->cwd->attrs.size * FS_BLOCK_SIZE, fsize_buf,
-                     FS_FSIZE_FORMAT_SIZE);
+  fs_utils_fsize2str(fs->cwd->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
   fs_utils_secs2str(fs->cwd->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
 
   written += snprintf(buf + written, n - written, FS_LS_FORMAT,
@@ -171,8 +170,7 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
     // TODO separete this into a function (in file.h)
     fs_file_t* file = (fs_file_t*)child->data;
 
-    fs_utils_fsize2str(file->attrs.size * FS_BLOCK_SIZE, fsize_buf,
-                       FS_FSIZE_FORMAT_SIZE);
+    fs_utils_fsize2str(file->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
     fs_utils_secs2str(file->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
 
     written += snprintf(buf + written, n, FS_LS_FORMAT,
@@ -327,7 +325,7 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
     // we might endup w/ a surplus of 1 block
     // FIXME there's a linear scan happening every time.
     //       change the start to the last block.
-    if (i+1 < blocks_needed)
+    if (i + 1 < blocks_needed)
       block = fs_fat_addblock(fs->fat, file->fblock);
   }
 
@@ -348,7 +346,7 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
           "fseek: ");
 
   // persist directory block
-  uint8_t block_buf[FS_BLOCK_SIZE] = {0};
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   written = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
   PASSERT(fwrite(block_buf, sizeof(uint8_t), written, fs->file) == written, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
@@ -387,4 +385,27 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   PASSERT(~fseek(fs->file, offset, SEEK_SET), "lseek: ");
   PASSERT(written == file->attrs.size, "Should've written %d. Wrote %d ",
           file->attrs.size, written);
+}
+
+fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
+{
+  int n = 0;
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
+  fs_file_t* f = fs_file_create(fname, FS_FILE_DIRECTORY, fs->cwd);
+
+  fs_file_addchild(fs->cwd, f);
+  f->parent = fs->cwd;
+  f->fblock = fs_fat_addfile(fs->fat);
+
+  // persist updated directory entry
+  // compute the correct position and write over
+  PASSERT(~fseek(fs->file,
+                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
+                 SEEK_SET),
+          "fseek: ");
+  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+  PASSERT(fflush(fs->file) != EOF, "fflush: ");
+
+  return f;
 }

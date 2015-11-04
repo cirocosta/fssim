@@ -333,6 +333,25 @@ void test16()
   fclose(fout);
 }
 
+void test17()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  ASSERT(fs->root->children_count == 0, "");
+  fs_filesystem_mkdir(fs, "/tmp");
+  ASSERT(fs->root->children_count == 1, "");
+
+  fs_file_t* tmp_dir = (fs_file_t*)fs->root->children->data;
+  ASSERT(tmp_dir->attrs.is_directory == 1, "");
+  ASSERT(tmp_dir->attrs.size == 4096, "");
+  
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -348,6 +367,7 @@ int main(int argc, char* argv[])
   TEST(test14, "cp - copy from real fs to sim - 1KB");
   TEST(test15, "cp - copy from real fs to sim - 1MB");
   TEST(test16, "cat which actually copies out to real fs");
+  TEST(test17, "dir");
 
   return 0;
 }
