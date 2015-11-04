@@ -53,7 +53,7 @@ void test4()
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_touch(fs, "file.txt");
+  fs_filesystem_touch(fs, "/file.txt");
 
   ASSERT(
       !strcmp(((fs_file_t*)fs->root->children->data)->attrs.fname, "file.txt"),
@@ -93,8 +93,8 @@ void test8()
   fs_utils_fdelete(FS_TEST_FNAME);
 
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_touch(fs, "hue.txt");
-  fs_filesystem_touch(fs, "lol.txt");
+  fs_filesystem_touch(fs, "/hue.txt");
+  fs_filesystem_touch(fs, "/lol.txt");
   fs_filesystem_ls(fs, "/", buf, BUFSIZE);
 
   ASSERT(!strcmp(buf, expected), "\n`\n%s`\n != \n`\n%s`\n", buf, expected);
@@ -108,8 +108,8 @@ void test9()
   fs_utils_fdelete(FS_TEST_FNAME);
 
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_touch(fs, "hue.txt");
-  fs_filesystem_touch(fs, "lol.txt");
+  fs_filesystem_touch(fs, "/hue.txt");
+  fs_filesystem_touch(fs, "/lol.txt");
 
   fs_file_t* file = fs_filesystem_find(fs, "/", "hue.txt");
 
@@ -126,8 +126,8 @@ void test11()
   fs_utils_fdelete(FS_TEST_FNAME);
 
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_touch(fs, "hue.txt");
-  fs_filesystem_touch(fs, "lol.txt");
+  fs_filesystem_touch(fs, "/hue.txt");
+  fs_filesystem_touch(fs, "/lol.txt");
 
   ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
   ASSERT(fs_filesystem_rm(fs, "hue.txt"), "");
@@ -163,7 +163,7 @@ void test13()
   ASSERT(fs_filesystem_find(fs2, "/", "hue.txt") == NULL, "file is not there");
   ASSERT(fs2->root->children_count == 0, "");
 
-  fs_filesystem_touch(fs2, "hue.txt");
+  fs_filesystem_touch(fs2, "/hue.txt");
 
   ASSERT(fs2->root->children_count == 1, "");
   ASSERT(fs_filesystem_find(fs2, "/", "hue.txt"), "now the file is :D");
@@ -207,7 +207,7 @@ void test12()
 
   ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there!");
 
-  fs_filesystem_touch(fs, "hue.txt");
+  fs_filesystem_touch(fs, "/hue.txt");
 
   ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
   ASSERT(fs_filesystem_rm(fs, "hue.txt"), "");
@@ -235,12 +235,13 @@ void test14()
 {
   fs_file_t* file = NULL;
   const char* FNAME = "test9-file";
+  const char* FNAME_FS = "/test9-file";
   fs_filesystem_t* fs = fs_filesystem_create(10);
   _write_dumb_file(FNAME, 1 * FS_KILOBYTE);
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_cp(fs, FNAME, FNAME);
+  fs_filesystem_cp(fs, FNAME, FNAME_FS);
 
   ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
   ASSERT(file->fblock > 0, "0 reserved to root");
@@ -256,13 +257,14 @@ void test15()
 {
   fs_file_t* file = NULL;
   const char* FNAME = "test9-file";
+  const char* FNAME_FS = "/test9-file";
   fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
   _write_dumb_file(FNAME, 1 * FS_MEGABYTE);
   int blocks = 0;
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_cp(fs, FNAME, FNAME);
+  fs_filesystem_cp(fs, FNAME, FNAME_FS);
 
   ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
   ASSERT(file->fblock > 0, "0 reserved to root");
@@ -301,6 +303,7 @@ void test15()
 void test16()
 {
   const char* FNAME_IN = "17-in";
+  const char* FNAME_IN_FS = "/17-in";
   const char* FNAME_OUT = "17-out";
   uint8_t block_buf[FS_BLOCK_SIZE];
   int blocks = 1;
@@ -311,10 +314,10 @@ void test16()
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_cp(fs, FNAME_IN, FNAME_IN);
+  fs_filesystem_cp(fs, FNAME_IN, FNAME_IN_FS);
 
   PASSERT((fout = fopen(FNAME_OUT, "w+b")), "");
-  fs_filesystem_cat(fs, FNAME_IN, fileno(fout));
+  fs_filesystem_cat(fs, FNAME_IN_FS, fileno(fout));
   PASSERT(fclose(fout) == 0, "fclose:");
 
   PASSERT((fout = fopen(FNAME_OUT, "rb")), "");
@@ -336,6 +339,7 @@ void test16()
 void test17()
 {
   fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+  fs_file_t* tmp_dir = NULL;
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
@@ -344,17 +348,21 @@ void test17()
   fs_filesystem_mkdir(fs, "/tmp");
   ASSERT(fs->root->children_count == 1, "");
 
-  fs_file_t* tmp_dir = (fs_file_t*)fs->root->children->data;
+  tmp_dir = (fs_file_t*)fs->root->children->data;
   ASSERT(tmp_dir->attrs.is_directory == 1, "");
   ASSERT(tmp_dir->attrs.size == 4096, "");
   ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "%s is not the expected",
          tmp_dir->attrs.fname);
   fs_filesystem_destroy(fs);
   fs = NULL;
+  tmp_dir = NULL;
 
   fs = fs_filesystem_create(0);
+
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   ASSERT(fs->root->children_count == 1, "");
+
+  tmp_dir = (fs_file_t*)fs->root->children->data;
   ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "%s is not the expected",
          tmp_dir->attrs.fname);
 

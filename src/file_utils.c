@@ -24,7 +24,6 @@ FILE* fs_utils_mkfile(const char* fname, size_t size)
   return file;
 }
 
-
 char** fs_utils_splitpath(const char* input, unsigned* size)
 {
   const char delimiter = '/';
@@ -37,6 +36,8 @@ char** fs_utils_splitpath(const char* input, unsigned* size)
   char* tmp_init = tmp;
 
   char token_delimiter[2] = { delimiter, '\0' };
+
+  ASSERT(input[0] == '/', "%s is not an abs path.", input);
 
   while (i < input_size) {
     while (tmp[i++] == delimiter && i < input_size)

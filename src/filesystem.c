@@ -113,13 +113,11 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
 
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 {
-  // TODO concat fname to fs->cwd name till here
-  /* if (fs_utils_fexists(fname)) { */
-  /* } */
-
-  int n = 0;
+  unsigned n = 0;
+  unsigned argc = 0;
   uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  fs_file_t* f = fs_file_create(fname, FS_FILE_REGULAR, fs->cwd);
+  char** argv = fs_utils_splitpath(fname, &argc);
+  fs_file_t* f = fs_file_create(argv[0], FS_FILE_REGULAR, fs->cwd);
 
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
@@ -134,6 +132,8 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
   n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
   PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
+
+  FREE_ARR(argv, argc);
 
   return f;
 }
@@ -357,19 +357,23 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
 void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
 {
   fs_file_t* file = NULL;
-  ASSERT((file = fs_filesystem_find(fs, fs->cwd->attrs.fname, src)),
-         "File not found");
-  int remaining = file->attrs.size;
+  int remaining = 0;
   int n = 0;
   off_t offset = 0;
   uint32_t to_write = 0;
   int32_t written = 0;
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(src, &argc);
+
+  ASSERT((file = fs_filesystem_find(fs, fs->root->attrs.fname, argv[0])),
+         "File not found");
+
+  remaining = file->attrs.size;
 
   fflush(fs->file);
 
   for (int block = file->fblock;; n++) {
     to_write = remaining >= FS_BLOCK_SIZE ? FS_BLOCK_SIZE : remaining;
-
     offset = lseek(fileno(fs->file),
                    fs->blocks_offset + (FS_BLOCK_SIZE * block), SEEK_SET);
     PASSERT(written += sendfile(fd, fileno(fs->file), NULL, to_write),
@@ -385,13 +389,16 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   PASSERT(~fseek(fs->file, offset, SEEK_SET), "lseek: ");
   PASSERT(written == file->attrs.size, "Should've written %d. Wrote %d ",
           file->attrs.size, written);
+
+  FREE_ARR(argv, argc);
 }
 
 fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
 {
   unsigned n = 0;
+  unsigned argc = 0;
   uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  char** argv = fs_utils_splitpath(fname, &n);
+  char** argv = fs_utils_splitpath(fname, &argc);
   fs_file_t* f = fs_file_create(argv[0], FS_FILE_DIRECTORY, fs->cwd);
 
   fs_file_addchild(fs->cwd, f);
@@ -407,6 +414,8 @@ fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
   n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
   PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
+
+  FREE_ARR(argv, argc);
 
   return f;
 }
