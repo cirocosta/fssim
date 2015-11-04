@@ -259,7 +259,7 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
 {
   // TODO split path and get to the directory
   int n = 0;
-  uint8_t block_buf[FS_BLOCK_SIZE] = {0};
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   fs_llist_t* child = _find_file(fs, path);
 
   if (!child)
@@ -281,4 +281,62 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   return 1;
+}
+
+fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
+                            const char* dest)
+{
+  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
+  int32_t n = 0;
+  int32_t remaining = 0;
+  int32_t size;
+  int32_t blocks_needed;
+
+  // TODO how to properly notify the error?
+  //      [ issue 13 ]
+  ASSERT(!fs_filesystem_find(fs, fs->cwd->attrs.fname, dest),
+         "File already exists");
+
+  FILE* f = fopen(src, "r");
+  PASSERT(f, "fopen");
+
+  size = fs_utils_fsize(f);
+  blocks_needed = ceil(size / FS_BLOCK_SIZE);
+
+  // TODO assert that we have space (issue 14)
+  // TODO how to properly notify the error?
+  //      [ issue 13 ]
+
+  fs_file_t* file = fs_filesystem_touch(fs, dest);
+  file->attrs.size = size;
+  file->attrs.ctime = fs_utils_gettime();
+  file->attrs.mtime = file->attrs.ctime;
+  file->attrs.atime = file->attrs.ctime;
+
+  for (int i = 1; i < blocks_needed; i++) {
+    uint32_t pos = fs_fat_addblock(fs->fat, file->fblock);
+    uint32_t to_write = remaining >= FS_BLOCK_SIZE ? FS_BLOCK_SIZE : remaining;
+    n = 0;
+
+    while (n < to_write)
+      n += fread(block_buf, sizeof(uint8_t), to_write, f);
+
+    fseek(fs->file, fs->blocks_offset + FS_BLOCK_SIZE * fs->cwd->fblock,
+          SEEK_SET);
+
+    while (n > 0) {
+      PASSERT(fwrite(block_buf, sizeof(uint8_t), to_write, fs->file) == n,
+              "fwrite: ");
+    }
+
+    remaining -= n;
+  }
+
+  ASSERT(remaining == 0, "Didn't copy everything :(");
+  // TODO how to properly notify the error?
+  //      [ issue 13 ]
+
+  PASSERT(fclose(f) == 0, "fclose");
+
+  return file;
 }

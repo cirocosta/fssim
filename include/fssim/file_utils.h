@@ -4,6 +4,7 @@
 #include "fssim/common.h"
 #include <sys/time.h>
 #include <time.h>
+#include <sys/sendfile.h>
 
 int32_t fs_utils_gettime();
 int fs_utils_fsize(FILE* file);

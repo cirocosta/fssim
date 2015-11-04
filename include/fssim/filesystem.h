@@ -6,6 +6,9 @@
 #include "fssim/file.h"
 #include "fssim/file_utils.h"
 
+#include <math.h>
+
+
 typedef struct fs_filesystem_t {
   size_t blocks_num;
   size_t block_size;
