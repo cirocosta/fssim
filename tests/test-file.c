@@ -57,7 +57,10 @@ void test4()
   fs_file_t* file = fs_file_create("hue.scm", FS_FILE_REGULAR, NULL);
   fs_file_t* file2 = fs_file_create("other.scm", FS_FILE_REGULAR, NULL);
 
+  file->attrs.size = 230;
   file->fblock = 32;
+
+  file2->attrs.size = 460;
   file2->fblock = 64;
 
   unsigned char* buf = calloc(512, sizeof(*buf));
@@ -76,7 +79,10 @@ void test4()
   fs_file_t* dir2_child2 = (fs_file_t*)dir2->children->next->data;
 
   ASSERT(dir2_child1->fblock == 32, "actually: %d", dir2_child1->fblock);
+  ASSERT(dir2_child1->attrs.size == 230, "actually: %d",
+         dir2_child1->attrs.size);
   ASSERT(dir2_child2->fblock == 64, "");
+  ASSERT(dir2_child2->attrs.size == 460, "");
   ASSERT(!strcmp(dir2_child1->attrs.fname, "hue.scm"), "");
   ASSERT(dir2_child1->attrs.is_directory == 0, "");
 

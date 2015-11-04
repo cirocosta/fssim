@@ -15,10 +15,8 @@ typedef struct fs_file_attrs_t {
   uint32_t size;
 } fs_file_attr_t;
 
-
 typedef struct fs_file_t {
   uint32_t fblock;
-  uint8_t* payload;
   fs_file_attr_t attrs;
 
   struct fs_file_t* parent;

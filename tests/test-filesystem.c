@@ -236,7 +236,7 @@ void test14()
   fs_file_t* file = NULL;
   const char* FNAME = "test9-file";
   fs_filesystem_t* fs = fs_filesystem_create(10);
-  _write_dumb_file(FNAME, 1 * FS_KILOBYTE);
+  _write_dumb_file(FNAME, 1*FS_KILOBYTE) ;
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
@@ -246,6 +246,8 @@ void test14()
   ASSERT(file->fblock > 0, "0 reserved to root");
   ASSERT(fs->fat->blocks[file->fblock] == file->fblock,
          "single block - small file");
+  
+  // flawled test
 
   fs_filesystem_destroy(fs);
 }
@@ -266,6 +268,7 @@ void test15()
   ASSERT(file->fblock > 0, "0 reserved to root");
   ASSERT(fs->fat->blocks[file->fblock] != file->fblock,
          "more than one block to the file");
+  ASSERT(file->attrs.size == 1 * FS_MEGABYTE, "actual: %d", file->attrs.size);
 
   for (int block = file->fblock;;) {
     blocks++;
@@ -278,20 +281,6 @@ void test15()
   ASSERT(blocks == 256, "actually has %d", blocks);
 
   fs_filesystem_destroy(fs);
-}
-
-void test16()
-{
-  fs_file_t* file = NULL;
-  const char* FNAME = "test9-file";
-  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
-  _write_dumb_file(FNAME, 1 * FS_MEGABYTE);
-  int blocks = 1;
-
-  fs_utils_fdelete(FS_TEST_FNAME);
-  fs_filesystem_mount(fs, FS_TEST_FNAME);
-  fs_filesystem_cp(fs, FNAME, FNAME);
-  fs_filesystem_destroy(fs);
   fs = NULL;
   // close the file
 
@@ -301,11 +290,47 @@ void test16()
 
   ASSERT(fs->root->children_count == 1, "");
   ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
+  ASSERT(file->attrs.size == 1 * FS_MEGABYTE, "actual: %d", file->attrs.size);
   ASSERT(file->fblock > 0, "0 reserved to root");
   ASSERT(fs->fat->blocks[file->fblock] != file->fblock,
          "more than one block to the file");
 
   fs_filesystem_destroy(fs);
+}
+
+void test16()
+{
+  const char* FNAME_IN = "17-in";
+  const char* FNAME_OUT = "17-out";
+  uint8_t block_buf[FS_BLOCK_SIZE];
+  int blocks = 1;
+  FILE* fout = NULL;
+  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+
+  _write_dumb_file(FNAME_IN, 1 * FS_MEGABYTE);
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_cp(fs, FNAME_IN, FNAME_IN);
+
+  PASSERT((fout = fopen(FNAME_OUT, "w+b")), "");
+  fs_filesystem_cat(fs, FNAME_IN, fileno(fout));
+  PASSERT(fclose(fout) == 0, "fclose:");
+
+  PASSERT((fout = fopen(FNAME_OUT, "rb")), "");
+  int i = 1 * FS_MEGABYTE;
+  int res = 0xff;
+  while (i > 0) {
+    fread(block_buf, sizeof(uint8_t), 1024, fout);
+    for (int i = 0; i < 1024; i++)
+      res &= block_buf[i];
+
+    i -= 1024;
+  }
+  ASSERT(res == 0xff, "");
+
+  fs_filesystem_destroy(fs);
+  /* fclose(fout); */
 }
 
 int main(int argc, char* argv[])
@@ -322,7 +347,7 @@ int main(int argc, char* argv[])
   TEST(test13, "mount - file persistence - single level");
   TEST(test14, "cp - copy from real fs to sim - 1KB");
   TEST(test15, "cp - copy from real fs to sim - 1MB");
-  TEST(test16, "cp - persist copied stuff");
+  TEST(test16, "cat which actually copies out to real fs");
 
   return 0;
 }

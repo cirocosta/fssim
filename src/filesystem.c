@@ -284,62 +284,107 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
 fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
                             const char* dest)
 {
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  int32_t n = 0;
+  off_t offset = 0;
   int32_t remaining = 0;
-  int32_t size;
-  int32_t blocks_needed;
+  int32_t written = 0;
+  int32_t size = 0;
+  int32_t blocks_needed = 0;
+  FILE* f = NULL;
+  fs_file_t* file = NULL;
+  uint32_t block = UINT32_MAX;
 
-  // TODO how to properly notify the error?
-  //      [ issue 13 ]
   ASSERT(!fs_filesystem_find(fs, fs->cwd->attrs.fname, dest),
          "File already exists");
-
-  FILE* f = fopen(src, "r");
-  PASSERT(f, "fopen");
+  PASSERT(f = fopen(src, "r"), "fopen");
 
   size = fs_utils_fsize(f);
-  blocks_needed = ceil(size / FS_BLOCK_SIZE);
+  blocks_needed = ((size - 1) / FS_BLOCK_SIZE | 0) + 1;
+  remaining = size;
 
-  // TODO assert that we have space (issue 14)
-  // TODO how to properly notify the error?
-  //      [ issue 13 ]
+  // TODO assert that we have space [issue 14]
+  // TODO how to properly notify the error? [ issue 13 ]
 
-  fs_file_t* file = fs_filesystem_touch(fs, dest);
+  file = fs_filesystem_touch(fs, dest);
   file->attrs.size = size;
   file->attrs.ctime = fs_utils_gettime();
   file->attrs.mtime = file->attrs.ctime;
   file->attrs.atime = file->attrs.ctime;
+  block = file->fblock;
 
-  for (int i = 1; i < blocks_needed; i++) {
-    uint32_t pos = fs_fat_addblock(fs->fat, file->fblock);
+  fflush(fs->file);
+  fflush(f);
+
+  for (int i = 0; i < blocks_needed; i++) {
     uint32_t to_write = remaining >= FS_BLOCK_SIZE ? FS_BLOCK_SIZE : remaining;
-    n = 0;
 
-    while (n < to_write)
-      n += fread(block_buf, sizeof(uint8_t), to_write, f);
+    remaining -= to_write;
+    offset = lseek(fileno(fs->file),
+                   fs->blocks_offset + (FS_BLOCK_SIZE * block), SEEK_SET);
 
-    fseek(fs->file, fs->blocks_offset + FS_BLOCK_SIZE * fs->cwd->fblock,
-          SEEK_SET);
+    while (to_write)
+      to_write -= sendfile(fileno(fs->file), fileno(f), NULL, to_write);
 
-    while (n > 0) {
-      PASSERT(fwrite(block_buf, sizeof(uint8_t), to_write, fs->file) == n,
-              "fwrite: ");
-    }
-
-    remaining -= n;
+    // we might endup w/ a surplus of 1 block
+    // FIXME there's a linear scan happening every time.
+    //       change the start to the last block.
+    if (i+1 < blocks_needed)
+      block = fs_fat_addblock(fs->fat, file->fblock);
   }
 
-  ASSERT(remaining == 0, "Didn't copy everything :(");
-  // TODO how to properly notify the error?
-  //      [ issue 13 ]
+  fseek(fs->file, offset, SEEK_SET);
 
+  ASSERT(remaining == 0, "Didn't copy everything. Remaining = %d", remaining);
   PASSERT(fclose(f) == 0, "fclose");
 
-  n = fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
+  // persist FAT and BMP
+  written = fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
   fseek(fs->file, 0, SEEK_SET);
-  PASSERT(fwrite(fs->buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
-  fflush(fs->file);
+  PASSERT(fwrite(fs->buf, sizeof(uint8_t), written, fs->file) == written,
+          "fwrite: ");
+
+  PASSERT(~fseek(fs->file,
+                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
+                 SEEK_SET),
+          "fseek: ");
+
+  // persist directory block
+  uint8_t block_buf[FS_BLOCK_SIZE];
+  written = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(block_buf, sizeof(uint8_t), written, fs->file) == written, "");
+  PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   return file;
+}
+
+void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
+{
+  fs_file_t* file = NULL;
+  ASSERT((file = fs_filesystem_find(fs, fs->cwd->attrs.fname, src)),
+         "File not found");
+  int remaining = file->attrs.size;
+  int n = 0;
+  off_t offset = 0;
+  uint32_t to_write = 0;
+  int32_t written = 0;
+
+  fflush(fs->file);
+
+  for (int block = file->fblock;; n++) {
+    to_write = remaining >= FS_BLOCK_SIZE ? FS_BLOCK_SIZE : remaining;
+
+    offset = lseek(fileno(fs->file),
+                   fs->blocks_offset + (FS_BLOCK_SIZE * block), SEEK_SET);
+    PASSERT(written += sendfile(fd, fileno(fs->file), NULL, to_write),
+            "sendfile: ");
+
+    if (fs->fat->blocks[block] == block)
+      break;
+
+    block = fs->fat->blocks[block];
+    remaining -= to_write;
+  }
+
+  PASSERT(~fseek(fs->file, offset, SEEK_SET), "lseek: ");
+  PASSERT(written == file->attrs.size, "Should've written %d. Wrote %d ",
+          file->attrs.size, written);
 }

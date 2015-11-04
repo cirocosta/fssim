@@ -35,6 +35,7 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
                               const char* fname);
 fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
                             const char* dest);
+void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd);
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname);
 int fs_filesystem_rm(fs_filesystem_t* fs, const char* path);
 

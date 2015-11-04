@@ -8,7 +8,6 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
   PASSERT(file, FS_ERR_MALLOC);
 
   file->fblock = UINT32_MAX;
-  file->payload = NULL;
   file->children = NULL;
   file->children_count = 0;
 
