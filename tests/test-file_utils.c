@@ -148,6 +148,22 @@ void test9()
   PASSERT(!fclose(f), "fclose:");
 }
 
+void test10()
+{
+  const char input[] = "/bin/ls/hue/lol///";
+  const char* expected[] = { "bin", "ls", "hue", "lol", NULL };
+
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(input, &argc);
+
+  ASSERT(argc == 4, "");
+  for (unsigned i = 0; i < argc; i++)
+    ASSERT(strcmp(argv[i], expected[i]) == 0, "%s != %s", argv[i], expected[i]);
+  ASSERT(argv[argc] == NULL, "Must end with a NULL");
+
+  FREE_ARR(argv, argc);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "splits path accordingly");
@@ -159,6 +175,7 @@ int main(int argc, char* argv[])
   TEST(test7, "human file size utilities - KB");
   TEST(test8, "human file size utilities - megabytes");
   TEST(test9, "file allocation");
+  TEST(test10, "splits path - trailing slash");
 
   return 0;
 }

@@ -222,10 +222,8 @@ void fs_filesystem_load(fs_filesystem_t* fs)
   fs->cwd = fs->root;
 }
 
-static fs_llist_t* _find_file(fs_filesystem_t* fs, const char* fname)
+static fs_llist_t* _find_file_in_layer(fs_llist_t* child, const char* fname)
 {
-  fs_llist_t* child = fs->cwd->children;
-
   while (child) {
     if (!strcmp(((fs_file_t*)child->data)->attrs.fname, fname))
       return child;
@@ -236,19 +234,53 @@ static fs_llist_t* _find_file(fs_filesystem_t* fs, const char* fname)
   return NULL;
 }
 
+fs_llist_t* fs_filesystem_traverse_to(fs_filesystem_t* fs, const char* dirname)
+{
+  int i = 0;
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(dirname, &argc);
+  fs_llist_t* f = fs->root->children;
+  fs_file_t* curr_file = NULL;
+
+  if (argc == 0) { // dealing with root ('/')
+    fs->cwd = fs->root;
+    FREE_ARR(argv, argc);
+    return f;
+  }
+
+  for (; i < (int)(argc - 1); i++) {
+    if (!(f = _find_file_in_layer(f, argv[i]))) {
+      FREE_ARR(argv, argc);
+      return NULL;
+    }
+
+    curr_file = (fs_file_t*)f->data;
+    if (!curr_file->attrs.is_directory) {
+      return NULL;
+      FREE_ARR(argv, argc);
+    }
+  }
+
+  // for the last part, don't care whether it is
+  // a directory or a file
+  if ((f = _find_file_in_layer(f, argv[i]))) {
+    curr_file = (fs_file_t*)f->data;
+    if (curr_file->attrs.is_directory)
+      fs->cwd = curr_file;
+  }
+
+  FREE_ARR(argv, argc);
+  return f;
+}
+
+// DFS
 fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
                               const char* fname)
 {
-  fs_llist_t* child = _find_file(fs, fname);
-  fs_file_t* curr_file = NULL;
+  fs_llist_t* dir = fs_filesystem_traverse_to(fs, root);
+  fs_llist_t* file = _find_file_in_layer(dir, fname);
 
-  // TODO split 'root' path, get there (if exists)
-  //      and then perform the lookup
-
-  if (!child)
-    return NULL;
-
-  return (fs_file_t*)child->data;
+  return file ? (fs_file_t*)file->data : NULL;
 }
 
 int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
@@ -256,13 +288,13 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
   // TODO split path and get to the directory
   int n = 0;
   uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  fs_llist_t* child = _find_file(fs, path);
+  fs_llist_t* file = fs_filesystem_traverse_to(fs, path);
 
-  if (!child)
+  if (!file)
     return 0;
 
-  fs_llist_remove(fs->cwd->children, child);
-  fs_llist_destroy(child, fs_file_destructor);
+  fs_llist_remove(fs->cwd->children, file);
+  fs_llist_destroy(file, fs_file_destructor);
   fs->cwd->children_count--;
 
   if (!fs->cwd->children_count)

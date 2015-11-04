@@ -28,7 +28,7 @@ char** fs_utils_splitpath(const char* input, unsigned* size)
 {
   const char delimiter = '/';
   const size_t input_size = strlen(input);
-  unsigned count = 0;
+  int count = 0;
   unsigned i = 0;
 
   char** result = NULL;

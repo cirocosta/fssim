@@ -114,8 +114,26 @@ void test9()
   fs_file_t* file = fs_filesystem_find(fs, "/", "hue.txt");
 
   ASSERT(file, "file must be found");
-  ASSERT(!strcmp(file->attrs.fname, "hue.txt"), "file must be found");
+  ASSERT(!strcmp(file->attrs.fname, "hue.txt"), "actually found %s",
+         file->attrs.fname);
   ASSERT(!fs_filesystem_find(fs, "/", "NOT_FOUND.txt"), "file must be found");
+
+  fs_filesystem_destroy(fs);
+}
+
+void test10()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_mkdir(fs, "/tmp");
+  fs_file_t* tmp_dir = fs_filesystem_find(fs, "/", "tmp");
+  fs_file_t* new_file = fs_file_create("fffu", FS_FILE_REGULAR, tmp_dir);
+  fs_file_addchild(fs->cwd, new_file);
+
+  ASSERT(fs_filesystem_find(fs, "/", "fffu") != NULL, "");
+  ASSERT(!strcmp(fs_filesystem_find(fs, "/", "fffu")->attrs.fname, "fffu"), "");
 
   fs_filesystem_destroy(fs);
 }
@@ -130,20 +148,31 @@ void test11()
   fs_filesystem_touch(fs, "/lol.txt");
 
   ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
-  ASSERT(fs_filesystem_rm(fs, "hue.txt"), "");
+  ASSERT(fs_filesystem_rm(fs, "/hue.txt"), "");
   ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there anymore!");
 
   fs_filesystem_destroy(fs);
 }
 
-// 1. initializes an empty fs and then closes it
-// 2. opens the last state of the fs (empty),
-//    adds a file and then closes it.
-// 3. opens the last state of the fs (not empty),
-//    verifies that the file is present, then removes
-//    it
-// 4. opens the last state of the fs (empty again)
-//    and verifies that it is indeed empty.
+void test12()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there!");
+
+  fs_filesystem_touch(fs, "/hue.txt");
+
+  ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
+  ASSERT(fs_filesystem_rm(fs, "/hue.txt"), "");
+  ASSERT(fs->root->children_count == 0, "empty root!");
+  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there anymore!");
+
+  fs_filesystem_destroy(fs);
+}
+
 void test13()
 {
   // fs
@@ -180,7 +209,7 @@ void test13()
   ASSERT(fs->root->children_count == 1, "");
   ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file correctly retained");
 
-  ASSERT(fs_filesystem_rm(fs, "hue.txt"), "file removed properly");
+  ASSERT(fs_filesystem_rm(fs, "/hue.txt"), "file removed properly");
   ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"),
          "the file isn't there anymore!");
   fs_filesystem_destroy(fs);
@@ -198,24 +227,6 @@ void test13()
   fs2 = NULL;
 }
 
-void test12()
-{
-  fs_filesystem_t* fs = fs_filesystem_create(10);
-  fs_utils_fdelete(FS_TEST_FNAME);
-
-  fs_filesystem_mount(fs, FS_TEST_FNAME);
-
-  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there!");
-
-  fs_filesystem_touch(fs, "/hue.txt");
-
-  ASSERT(fs_filesystem_find(fs, "/", "hue.txt"), "file is there");
-  ASSERT(fs_filesystem_rm(fs, "hue.txt"), "");
-  ASSERT(fs->root->children_count == 0, "empty root!");
-  ASSERT(!fs_filesystem_find(fs, "/", "hue.txt"), "file is not there anymore!");
-
-  fs_filesystem_destroy(fs);
-}
 
 static void _write_dumb_file(const char* fname, size_t size)
 {
@@ -234,14 +245,16 @@ static void _write_dumb_file(const char* fname, size_t size)
 void test14()
 {
   fs_file_t* file = NULL;
-  const char* FNAME = "test9-file";
-  const char* FNAME_FS = "/test9-file";
+  const char* FNAME = "test14f";
+  const char* FNAME_FS = "/test14f";
   fs_filesystem_t* fs = fs_filesystem_create(10);
   _write_dumb_file(FNAME, 1 * FS_KILOBYTE);
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   fs_filesystem_cp(fs, FNAME, FNAME_FS);
+
+  LOGERR("fst child = %s", ((fs_file_t*)fs->root->children->data)->attrs.fname);
 
   ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
   ASSERT(file->fblock > 0, "0 reserved to root");
@@ -256,8 +269,8 @@ void test14()
 void test15()
 {
   fs_file_t* file = NULL;
-  const char* FNAME = "test9-file";
-  const char* FNAME_FS = "/test9-file";
+  const char* FNAME = "test15-f";
+  const char* FNAME_FS = "/test15-f";
   fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
   _write_dumb_file(FNAME, 1 * FS_MEGABYTE);
   int blocks = 0;
@@ -369,6 +382,23 @@ void test17()
   fs_filesystem_destroy(fs);
 }
 
+void test18()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+  fs_file_t* tmp_dir = NULL;
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_mkdir(fs, "/tmp");
+  fs_filesystem_touch(fs, "/tmp/hue.br");
+
+  tmp_dir = fs_filesystem_find(fs, "/", "tmp");
+  ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "");
+  ASSERT(tmp_dir->children_count == 1, "");
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -378,6 +408,7 @@ int main(int argc, char* argv[])
   TEST(test5, "superblock serialization");
   TEST(test8, "ls - root w/ children");
   TEST(test9, "find - check for file in current layer");
+  TEST(test10, "find revamped - recursive search");
   TEST(test11, "rm - remove file");
   TEST(test12, "rm - add and remove sole file");
   TEST(test13, "mount - file persistence - single level");
@@ -385,6 +416,7 @@ int main(int argc, char* argv[])
   TEST(test15, "cp - copy from real fs to sim - 1MB");
   TEST(test16, "cat which actually copies out to real fs");
   TEST(test17, "dir - single level");
+  /* TEST(test18, "dir - multiple levels"); */
 
   return 0;
 }
