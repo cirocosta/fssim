@@ -236,7 +236,7 @@ void test14()
   fs_file_t* file = NULL;
   const char* FNAME = "test9-file";
   fs_filesystem_t* fs = fs_filesystem_create(10);
-  _write_dumb_file(FNAME, 1*FS_KILOBYTE) ;
+  _write_dumb_file(FNAME, 1 * FS_KILOBYTE);
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
@@ -246,7 +246,7 @@ void test14()
   ASSERT(file->fblock > 0, "0 reserved to root");
   ASSERT(fs->fat->blocks[file->fblock] == file->fblock,
          "single block - small file");
-  
+
   // flawled test
 
   fs_filesystem_destroy(fs);
@@ -347,7 +347,16 @@ void test17()
   fs_file_t* tmp_dir = (fs_file_t*)fs->root->children->data;
   ASSERT(tmp_dir->attrs.is_directory == 1, "");
   ASSERT(tmp_dir->attrs.size == 4096, "");
-  
+  ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "%s is not the expected",
+         tmp_dir->attrs.fname);
+  fs_filesystem_destroy(fs);
+  fs = NULL;
+
+  fs = fs_filesystem_create(0);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  ASSERT(fs->root->children_count == 1, "");
+  ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "%s is not the expected",
+         tmp_dir->attrs.fname);
 
   fs_filesystem_destroy(fs);
 }
@@ -367,7 +376,7 @@ int main(int argc, char* argv[])
   TEST(test14, "cp - copy from real fs to sim - 1KB");
   TEST(test15, "cp - copy from real fs to sim - 1MB");
   TEST(test16, "cat which actually copies out to real fs");
-  TEST(test17, "dir");
+  TEST(test17, "dir - single level");
 
   return 0;
 }

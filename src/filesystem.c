@@ -389,9 +389,10 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
 
 fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
 {
-  int n = 0;
+  unsigned n = 0;
   uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  fs_file_t* f = fs_file_create(fname, FS_FILE_DIRECTORY, fs->cwd);
+  char** argv = fs_utils_splitpath(fname, &n);
+  fs_file_t* f = fs_file_create(argv[0], FS_FILE_DIRECTORY, fs->cwd);
 
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
