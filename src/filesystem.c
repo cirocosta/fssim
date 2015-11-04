@@ -348,7 +348,7 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
           "fseek: ");
 
   // persist directory block
-  uint8_t block_buf[FS_BLOCK_SIZE];
+  uint8_t block_buf[FS_BLOCK_SIZE] = {0};
   written = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
   PASSERT(fwrite(block_buf, sizeof(uint8_t), written, fs->file) == written, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");

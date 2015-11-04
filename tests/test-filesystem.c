@@ -330,7 +330,7 @@ void test16()
   ASSERT(res == 0xff, "");
 
   fs_filesystem_destroy(fs);
-  /* fclose(fout); */
+  fclose(fout);
 }
 
 int main(int argc, char* argv[])
