@@ -247,8 +247,6 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
   // TODO split 'root' path, get there (if exists)
   //      and then perform the lookup
 
-  LOGERR("child found = %c", child != NULL ? 'y' : 'n');
-
   if (!child)
     return NULL;
 
@@ -337,6 +335,11 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
   //      [ issue 13 ]
 
   PASSERT(fclose(f) == 0, "fclose");
+
+  n = fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
+  fseek(fs->file, 0, SEEK_SET);
+  PASSERT(fwrite(fs->buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
+  fflush(fs->file);
 
   return file;
 }

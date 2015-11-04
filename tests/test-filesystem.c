@@ -280,6 +280,34 @@ void test15()
   fs_filesystem_destroy(fs);
 }
 
+void test16()
+{
+  fs_file_t* file = NULL;
+  const char* FNAME = "test9-file";
+  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+  _write_dumb_file(FNAME, 1 * FS_MEGABYTE);
+  int blocks = 1;
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_cp(fs, FNAME, FNAME);
+  fs_filesystem_destroy(fs);
+  fs = NULL;
+  // close the file
+
+  // re-open
+  fs = fs_filesystem_create(0);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  ASSERT(fs->root->children_count == 1, "");
+  ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
+  ASSERT(file->fblock > 0, "0 reserved to root");
+  ASSERT(fs->fat->blocks[file->fblock] != file->fblock,
+         "more than one block to the file");
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -294,6 +322,7 @@ int main(int argc, char* argv[])
   TEST(test13, "mount - file persistence - single level");
   TEST(test14, "cp - copy from real fs to sim - 1KB");
   TEST(test15, "cp - copy from real fs to sim - 1MB");
+  TEST(test16, "cp - persist copied stuff");
 
   return 0;
 }
