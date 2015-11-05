@@ -7,16 +7,15 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
   fs_file_t* file = malloc(sizeof(*file));
   PASSERT(file, FS_ERR_MALLOC);
 
-  file->fblock = UINT32_MAX;
   file->children = NULL;
   file->children_count = 0;
 
   // dealing w/ root case
-  file->parent = parent == NULL ? file : parent;
+  file->fblock = !parent ? 0 : UINT32_MAX;
+  file->parent = !parent ? file : parent;
 
   file->attrs = fs_zeroed_file_attrs;
   file->attrs.size = FS_BLOCK_SIZE;
-
   strncpy(file->attrs.fname, fname, FS_NAME_MAX);
   file->attrs.is_directory = type == FS_FILE_DIRECTORY ? 1 : 0;
 
@@ -66,25 +65,13 @@ int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
   return to_write;
 }
 
-fs_file_t* fs_file_load(unsigned char* buf)
+void fs_file_load_dir(fs_file_t* file, unsigned char* buf)
 {
-  fs_file_t* file = malloc(sizeof(*file));
-  PASSERT(file, FS_ERR_MALLOC);
-
   unsigned offset = 0;
-  unsigned counter = 0;
-  unsigned children_count = 0;
-
-  *file = fs_zeroed_file;
-  file->attrs = fs_zeroed_file_attrs;
-
-
-  children_count = deserialize_uint8_t(buf);
-  file->attrs.is_directory = 1;
-  counter++;
+  unsigned counter = 1;
+  unsigned children_count = deserialize_uint8_t(buf);
 
   while (counter <= children_count) {
-    // FIXME this is horrible
     fs_file_t* new_file = malloc(sizeof(*new_file));
     PASSERT(new_file, FS_ERR_MALLOC);
     *new_file = fs_zeroed_file;
@@ -104,8 +91,6 @@ fs_file_t* fs_file_load(unsigned char* buf)
 
     counter++;
   }
-
-  return file;
 }
 
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other)

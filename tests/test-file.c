@@ -42,12 +42,15 @@ void test3()
   PASSERT(buf, FS_ERR_MALLOC);
 
   fs_file_serialize_dir(dir, buf, 512);
-  fs_file_t* dir2 = fs_file_load(buf);
+  fs_file_destroy(dir);
+  dir = NULL;
 
-  ASSERT(dir2->children_count == 0, "");
+  dir = fs_file_create("/", FS_FILE_DIRECTORY, NULL);
+  fs_file_load_dir(dir, buf);
+
+  ASSERT(dir->children_count == 0, "");
 
   fs_file_destroy(dir);
-  fs_file_destroy(dir2);
   free(buf);
 }
 
@@ -71,7 +74,8 @@ void test4()
 
   fs_file_serialize_dir(dir, buf, 512);
 
-  fs_file_t* dir2 = fs_file_load(buf);
+  fs_file_t* dir2 = fs_file_create("/", FS_FILE_DIRECTORY, NULL);
+  fs_file_load_dir(dir2, buf);
 
   ASSERT(dir2->children_count == 2, "");
   ASSERT(dir2->children != NULL, "");

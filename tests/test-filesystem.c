@@ -409,9 +409,9 @@ void test18()
   fs_filesystem_mount(fs, FS_TEST_FNAME);
 
   ASSERT(fs->root->children_count == 1, "");
-  ASSERT(fs_filesystem_find(fs, "/", "tmp"), "");
-  // TODO fix in `load`
-  /* ASSERT(fs_filesystem_find(fs, "/tmp", "hue.br"), ""); */
+  ASSERT((tmp_dir = fs_filesystem_find(fs, "/", "tmp")), "");
+  ASSERT(tmp_dir->children_count == 1, "");
+  ASSERT(fs_filesystem_find(fs, "/tmp", "hue.br"), "");
 
   fs_filesystem_destroy(fs);
 }

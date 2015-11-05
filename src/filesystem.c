@@ -168,23 +168,39 @@ int fs_filesystem_serialize(fs_filesystem_t* fs, unsigned char* buf, int n)
   return written;
 }
 
-void fs_filesystem_load(fs_filesystem_t* fs)
+static void _load_fs_files(fs_filesystem_t* fs, fs_file_t* file)
 {
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
+  fs_llist_t* child = NULL;
+  fs_file_t* f = NULL;
   int n = 0;
 
+  fseek(fs->file, fs->blocks_offset + (file->fblock * FS_BLOCK_SIZE), SEEK_SET);
+  while (n < FS_BLOCK_SIZE)
+    n += fread(fs->block_buf, sizeof(uint8_t), FS_BLOCK_SIZE - n, fs->file);
+  fs_file_load_dir(file, fs->block_buf);
+
+  n = file->children_count;
+  child = file->children;
+
+  while (child) {
+    f = (fs_file_t*)child->data;
+
+    if (f->attrs.is_directory)
+      _load_fs_files(fs, f);
+
+    child = child->next;
+  }
+}
+
+void fs_filesystem_load(fs_filesystem_t* fs)
+{
   fs->block_size = deserialize_uint32_t(fs->buf);
   fs->blocks_num = deserialize_uint32_t(fs->buf + 4);
   fs->fat = fs_fat_load(fs->buf + 8, fs->blocks_num);
-
-  // read the first block in disk
-  fseek(fs->file, fs->blocks_offset, SEEK_SET);
-  while (n < FS_BLOCK_SIZE)
-    n += fread(block_buf, sizeof(uint8_t), FS_BLOCK_SIZE, fs->file);
-  PASSERT(~n, "fread error: ");
-
-  fs->root = fs_file_load(block_buf);
+  fs->root = fs_file_create("/", FS_FILE_DIRECTORY, NULL);
   fs->cwd = fs->root;
+
+  _load_fs_files(fs, fs->root);
 }
 
 static fs_llist_t* _find_file_in_layer(fs_llist_t* child, const char* fname)
@@ -231,15 +247,15 @@ static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
       return NULL;
   }
 
-  // last component: 
+  // last component:
   //  - return the file if found
   //  - return the directory where the file does not exist
-  if (f) 
+  if (f)
     file = (fs_file_t*)f->data;
 
   fs->cwd = file && file->attrs.is_directory ? file : fs->root;
 
-  if (!(f2 = _find_file_in_layer(f, argv[i]))) 
+  if (!(f2 = _find_file_in_layer(f, argv[i])))
     return f;
   return f2;
 }

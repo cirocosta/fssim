@@ -17,6 +17,7 @@ typedef struct fs_filesystem_t {
   fs_file_t* cwd;
   FILE* file;
   uint8_t* buf;
+  uint8_t block_buf[FS_BLOCK_SIZE];
 
   int32_t blocks_offset;
 } fs_filesystem_t;

@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <valgrind/valgrind.h>
 
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
@@ -60,6 +61,8 @@
 #define ASSERT(__cond, __msg, ...)                                             \
   do {                                                                         \
     if (!(__cond)) {                                                           \
+      VALGRIND_PRINTF_BACKTRACE("\nStack trace @ %s(), %d", __func__,          \
+                                __LINE__);                                     \
       fprintf(stderr, "\n" __BASE_FILE__ ": %2d\n", __LINE__);                 \
       fprintf(stderr, "Assertion `%s` failed\n", #__cond);                     \
       fprintf(stderr, "\t" __msg "\n", ##__VA_ARGS__);                         \
@@ -70,6 +73,8 @@
 #define PASSERT(condition, message, ...)                                       \
   do {                                                                         \
     if (!(condition)) {                                                        \
+      VALGRIND_PRINTF_BACKTRACE("\nStack trace @ %s(), %d", __func__,          \
+                                __LINE__);                                     \
       fprintf(stderr, "\n" __BASE_FILE__ ": %2d\n", __LINE__);                 \
       fprintf(stderr, message, ##__VA_ARGS__);                                 \
       fprintf(stderr, "%s\n", strerror(errno));                                \
