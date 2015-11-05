@@ -368,7 +368,6 @@ void test17()
   tmp_dir = NULL;
 
   fs = fs_filesystem_create(0);
-
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   ASSERT(fs->root->children_count == 1, "");
 
@@ -393,8 +392,26 @@ void test18()
          file_hue->parent->attrs.fname);
 
   tmp_dir = fs_filesystem_find(fs, "/", "tmp");
+  ASSERT(tmp_dir != NULL, "");
   ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "");
   ASSERT(tmp_dir->children_count == 1, "");
+  ASSERT(
+      !strcmp(((fs_file_t*)(tmp_dir->children->data))->attrs.fname, "hue.br"),
+      "");
+
+  ASSERT(fs_filesystem_find(fs, "/tmp", "hue.br"), "");
+
+  fs_filesystem_destroy(fs);
+  fs = NULL;
+  file_hue = NULL;
+
+  fs = fs_filesystem_create(0);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  ASSERT(fs->root->children_count == 1, "");
+  ASSERT(fs_filesystem_find(fs, "/", "tmp"), "");
+  // TODO fix in `load`
+  /* ASSERT(fs_filesystem_find(fs, "/tmp", "hue.br"), ""); */
 
   fs_filesystem_destroy(fs);
 }

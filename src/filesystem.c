@@ -115,18 +115,12 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n)
 {
-  unsigned num_path_comp;
-  char** path = fs_utils_splitpath(abspath, &num_path_comp);
   int written = 0;
   char mtime_buf[FS_DATE_FORMAT_SIZE] = { 0 };
   char fsize_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
   fs_llist_t* child = fs->cwd->children;
 
-  if (num_path_comp) { // we're not in the root
-    // go to the correct location and then proceed
-    // TODO
-    ASSERT(0, "not supported.");
-  }
+  // TODO traverse
 
   fs_utils_fsize2str(fs->cwd->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
   fs_utils_secs2str(fs->cwd->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
@@ -152,8 +146,6 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
 
     child = child->next;
   }
-
-  free(path);
 }
 
 int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
@@ -207,60 +199,66 @@ static fs_llist_t* _find_file_in_layer(fs_llist_t* child, const char* fname)
   return NULL;
 }
 
-fs_llist_t* fs_filesystem_traverse_to(fs_filesystem_t* fs, const char* dirname)
+static fs_llist_t* _traverse_to_dir(fs_filesystem_t* fs, char** argv,
+                                    unsigned argc)
 {
-  int i = 0;
-  unsigned argc = 0;
-  char** argv = fs_utils_splitpath(dirname, &argc);
   fs_llist_t* f = fs->root->children;
-  fs_llist_t* f2 = NULL;
-  fs_file_t* curr_file = NULL;
 
-  if (argc < 2) { // dealing with root ('/')
+  if (!argc) { // '/'
     fs->cwd = fs->root;
-
-    if (argc) // '/something.txt'
-      f = _find_file_in_layer(f, argv[0]);
-
-    FREE_ARR(argv, argc);
-    return f;
+    return fs->root->children;
   }
 
-  for (; i < (int)(argc - 1); i++) {
-    if (!(f = _find_file_in_layer(f, argv[i]))) {
-      FREE_ARR(argv, argc);
+  for (int i = 0; i < argc; i++) // '/something[/others ...]'
+    if (!(f = _find_file_in_layer(f, argv[i])))
       return NULL;
-    }
-
-    curr_file = (fs_file_t*)f->data;
-    if (!curr_file->attrs.is_directory) {
-      return NULL;
-      FREE_ARR(argv, argc);
-    }
-  }
-
-  // for the last part, don't care whether it is
-  // a directory or a file
-  if ((f2 = _find_file_in_layer(f, argv[i]))) {
-    curr_file = (fs_file_t*)f2->data;
-    if (curr_file->attrs.is_directory)
-      fs->cwd = curr_file;
-
-    FREE_ARR(argv, argc);
-    return f2;
-  }
 
   fs->cwd = (fs_file_t*)f->data;
-  FREE_ARR(argv, argc);
-  return f;
+
+  return fs->cwd->children;
+}
+
+static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
+                                     unsigned argc)
+{
+  fs_llist_t* f = fs->root->children;
+  fs_llist_t* f2 = NULL;
+  fs_file_t* file = NULL;
+  int i = 0;
+
+  for (; i < argc - 1; i++) { // '/something[/others ...]'
+    if (!(f = _find_file_in_layer(f, argv[i])))
+      return NULL;
+  }
+
+  // last component: 
+  //  - return the file if found
+  //  - return the directory where the file does not exist
+  if (f) 
+    file = (fs_file_t*)f->data;
+
+  fs->cwd = file && file->attrs.is_directory ? file : fs->root;
+
+  if (!(f2 = _find_file_in_layer(f, argv[i]))) 
+    return f;
+  return f2;
 }
 
 // DFS
 fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
                               const char* fname)
 {
-  fs_llist_t* dir = fs_filesystem_traverse_to(fs, root);
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(root, &argc);
+
+  fs_llist_t* dir = _traverse_to_dir(fs, argv, argc);
   fs_llist_t* file = _find_file_in_layer(dir, fname);
+
+  // ERROR fs->root->children de fato representa os children do
+  //       diretorio. Outros diretórios são apenas arquivos. Deste
+  //       modo, dir->next nao rola.
+
+  FREE_ARR(argv, argc);
 
   return file ? (fs_file_t*)file->data : NULL;
 }
@@ -268,12 +266,13 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 {
   unsigned n = 0;
-  unsigned argc = 0;
   uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
+  unsigned argc = 0;
   char** argv = fs_utils_splitpath(fname, &argc);
 
   // FIXME what about passing argv and argc to 'traverse'?
-  fs_llist_t* dir = fs_filesystem_traverse_to(fs, fname);
+  // FIXME verify if file exist
+  fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
   fs_file_t* f = fs_file_create(argv[argc - 1], FS_FILE_REGULAR, fs->cwd);
 
   fs_file_addchild(fs->cwd, f);
@@ -300,10 +299,14 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
   // TODO split path and get to the directory
   int n = 0;
   uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  fs_llist_t* file = fs_filesystem_traverse_to(fs, path);
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(path, &argc);
+  fs_llist_t* file = _traverse_to_file(fs, argv, argc);
 
-  if (!file)
+  if (!file) {
+    FREE_ARR(argv, argc);
     return 0;
+  }
 
   fs_llist_remove(fs->cwd->children, file);
   fs_llist_destroy(file, fs_file_destructor);
@@ -319,6 +322,8 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
   n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
   PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
+
+  FREE_ARR(argv, argc);
 
   return 1;
 }
