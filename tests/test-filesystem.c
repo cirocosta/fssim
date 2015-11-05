@@ -227,7 +227,6 @@ void test13()
   fs2 = NULL;
 }
 
-
 static void _write_dumb_file(const char* fname, size_t size)
 {
   FILE* file = NULL;
@@ -253,8 +252,6 @@ void test14()
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   fs_filesystem_cp(fs, FNAME, FNAME_FS);
-
-  LOGERR("fst child = %s", ((fs_file_t*)fs->root->children->data)->attrs.fname);
 
   ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
   ASSERT(file->fblock > 0, "0 reserved to root");
@@ -390,7 +387,10 @@ void test18()
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
   fs_filesystem_mkdir(fs, "/tmp");
-  fs_filesystem_touch(fs, "/tmp/hue.br");
+  fs_file_t* file_hue = fs_filesystem_touch(fs, "/tmp/hue.br");
+
+  ASSERT(!strcmp(file_hue->parent->attrs.fname, "tmp"), "actually: %s",
+         file_hue->parent->attrs.fname);
 
   tmp_dir = fs_filesystem_find(fs, "/", "tmp");
   ASSERT(!strcmp(tmp_dir->attrs.fname, "tmp"), "");
@@ -416,7 +416,7 @@ int main(int argc, char* argv[])
   TEST(test15, "cp - copy from real fs to sim - 1MB");
   TEST(test16, "cat which actually copies out to real fs");
   TEST(test17, "dir - single level");
-  /* TEST(test18, "dir - multiple levels"); */
+  TEST(test18, "dir - multiple levels");
 
   return 0;
 }
