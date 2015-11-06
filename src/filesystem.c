@@ -20,14 +20,14 @@ void fs_filesystem_destroy(fs_filesystem_t* fs)
     fs->fat = NULL;
   }
 
-  if (fs->file) {
-    PASSERT(fclose(fs->file) == 0, "fclose error:");
-    fs->file = NULL;
-  }
-
   if (fs->root) {
     fs_file_destroy(fs->root);
     fs->root = NULL;
+  }
+
+  if (fs->file) {
+    PASSERT(fclose(fs->file) == 0, "fclose error:");
+    fs->file = NULL;
   }
 
   if (fs->buf) {
@@ -462,23 +462,6 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   FREE_ARR(argv, argc);
 }
 
-static void _remove_dir_content(fs_llist_t* d)
-{
-  fs_llist_t* td = NULL;
-  fs_file_t* f = NULL;
-
-  while (d) {
-    f = (fs_file_t*)d->data;
-
-    if (f->attrs.is_directory)
-      _remove_dir_content(f->children);
-
-    td = d;
-    d = d->next;
-    td->next = NULL;
-    fs_llist_destroy(td, fs_file_destructor);
-  }
-}
 
 int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
 {
@@ -488,16 +471,14 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
   fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
   fs_file_t* file =  NULL;
 
-
   if (!dir) {
     FREE_ARR(argv, argc);
     return 0;
   }
 
   file = (fs_file_t*)dir->data;
-  _remove_dir_content(file->children);
   fs_llist_remove(fs->cwd->children, dir);
-  /* fs_llist_destroy(dir, fs_file_destructor); */
+  fs_llist_destroy(dir, fs_file_destructor);
 
   dir = NULL;
   file = NULL;

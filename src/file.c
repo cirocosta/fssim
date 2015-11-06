@@ -22,15 +22,32 @@ fs_file_t* fs_file_create(const char* fname, fs_file_type type,
   return file;
 }
 
+static void _remove_dir_content(fs_llist_t* d)
+{
+  fs_llist_t* td = NULL;
+  fs_file_t* f = NULL;
+
+  while (d) {
+    f = (fs_file_t*)d->data;
+
+    if (f->attrs.is_directory && f->children)
+      _remove_dir_content(f->children);
+
+    td = d;
+    d = d->next;
+    td->next = NULL;
+    fs_llist_destroy(td, NULL);
+    free(f);
+  }
+}
+
 void fs_file_destroy(fs_file_t* file)
 {
-  // TODO traverse the tree and free whatever is bellow?
   if (file->children)
-    fs_llist_destroy(file->children, fs_file_destructor);
+    _remove_dir_content(file->children);
   free(file);
 }
 
-// TODO test this following w/ a proper load()
 int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
 {
   int to_write = 32 + file->children_count * 32;

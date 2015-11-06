@@ -15,7 +15,7 @@ void fs_llist_destroy(fs_llist_t* list, fs_llist_func destructor)
 {
   fs_llist_t* next;
 
-  while (list) {
+  while (list != NULL) {
     next = list->next;
 
     if (list->data && destructor)
