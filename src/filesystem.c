@@ -224,7 +224,7 @@ static fs_llist_t* _traverse_to_dir(fs_filesystem_t* fs, char** argv,
     return fs->root->children;
   }
 
-  for (int i = 0; i < argc; i++) // '/something[/others ...]' 
+  for (int i = 0; i < argc; i++) // '/something[/others ...]'
     if (!(f = _find_file_in_layer(f, argv[i])))
       return NULL;
 
@@ -241,7 +241,7 @@ static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
   fs_file_t* file = NULL;
   int i = 0;
 
-  for (; i < argc - 1; i++)  // '[/others ...]/last' 
+  for (; i < argc - 1; i++) // '[/others ...]/last'
     if (!(f = _find_file_in_layer(f, argv[i])))
       return NULL;
 
@@ -253,7 +253,7 @@ static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
 
   fs->cwd = file && file->attrs.is_directory ? file : fs->root;
 
-  if (!(f2 = _find_file_in_layer(f, argv[i]))) 
+  if (!(f2 = _find_file_in_layer(f, argv[i])))
     return f;
 
   return f2;
@@ -285,7 +285,6 @@ static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
   // FIXME verify if file exist
   fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
   fs_file_t* f = fs_file_create(argv[argc - 1], type, fs->cwd);
-
 
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
@@ -462,14 +461,13 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   FREE_ARR(argv, argc);
 }
 
-
 int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
 {
   int n = 0;
   unsigned argc = 0;
   char** argv = fs_utils_splitpath(path, &argc);
   fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
-  fs_file_t* file =  NULL;
+  fs_file_t* file = NULL;
 
   if (!dir) {
     FREE_ARR(argv, argc);

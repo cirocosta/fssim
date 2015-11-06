@@ -1,6 +1,5 @@
 #include "fssim/simulator.h"
 
-
 fs_simulator_t* fs_simulator_create(void)
 {
   fs_simulator_t* sim = malloc(sizeof(*sim));
@@ -11,7 +10,4 @@ fs_simulator_t* fs_simulator_create(void)
   return sim;
 }
 
-void fs_simulator_destroy(fs_simulator_t* sim)
-{
-  free(sim);
-}
+void fs_simulator_destroy(fs_simulator_t* sim) { free(sim); }

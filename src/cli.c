@@ -128,7 +128,7 @@ int fs_cli_command_unmount(char** argv, unsigned argc, fs_simulator_t* sim)
     fprintf(stderr, "%s\n", "Can't perform `unmount` without a FS mounted;");
     return 0;
   }
-  
+
   /* fs_filesystem_unmount(sim->fs); */
   fs_filesystem_destroy(sim->fs);
   sim->fs = NULL;

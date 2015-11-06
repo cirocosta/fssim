@@ -50,7 +50,6 @@ uint32_t fs_fat_addfile(fs_fat_t* fat)
   return free_block;
 }
 
-
 uint32_t fs_fat_addblock(fs_fat_t* fat, uint32_t file_pos)
 {
   uint32_t free_block = fs_bmp_alloc(fat->bmp);
