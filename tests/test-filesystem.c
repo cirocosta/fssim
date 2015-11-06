@@ -416,6 +416,34 @@ void test18()
   fs_filesystem_destroy(fs);
 }
 
+void test19()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_mkdir(fs, "/lol");
+  fs_filesystem_mkdir(fs, "/tmp");
+  fs_filesystem_mkdir(fs, "/tmp/hue");
+  fs_filesystem_mkdir(fs, "/tmp/br");
+
+  ASSERT(fs_filesystem_find(fs, "/", "tmp") != NULL, "");
+
+  ASSERT(fs->root->children_count == 2, "");
+  ASSERT(fs_filesystem_rmdir(fs, "/lol"), "");
+  ASSERT(fs->root->children_count == 1, "");
+
+  fs_file_t* tmp_dir = fs_filesystem_find(fs, "/", "tmp");
+
+  ASSERT(tmp_dir->children_count == 2, "");
+  fs_filesystem_rmdir(fs, "/tmp");
+  ASSERT(fs->root->children_count == 0, "");
+  ASSERT(fs_filesystem_find(fs, "/", "tmp") == NULL, "");
+  ASSERT(fs_filesystem_find(fs, "/", "br") == NULL, "");
+
+  fs_filesystem_destroy(fs);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -434,6 +462,7 @@ int main(int argc, char* argv[])
   TEST(test16, "cat which actually copies out to real fs");
   TEST(test17, "dir - single level");
   TEST(test18, "dir - multiple levels");
+  TEST(test19, "multiple mkdir && rmdir");
 
   return 0;
 }

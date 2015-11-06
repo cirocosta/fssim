@@ -114,7 +114,7 @@ COMMANDS:
   touch <fname>         creates a file <fname>. If it already exists,
                         updates the file's last access time.
 
-  rm <fname>            remover a given <fname>
+  rm <fname>            removes a given <fname>
 
   ls <dir>              lists the files and directories 'below'
                         <dir>, showing $name, $size, $last_mod for

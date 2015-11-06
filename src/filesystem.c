@@ -41,7 +41,6 @@ void fs_filesystem_destroy(fs_filesystem_t* fs)
 static inline void fs_filesystem_mount_new(fs_filesystem_t* fs,
                                            const char* fname)
 {
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   fs_file_t* parent = NULL;
   size_t n = 0;
 
@@ -64,10 +63,10 @@ static inline void fs_filesystem_mount_new(fs_filesystem_t* fs,
 
   // persist root directory
   // compute the correct position and write
-  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
+  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
   fseek(fs->file, fs->blocks_offset + FS_BLOCK_SIZE * fs->cwd->fblock,
         SEEK_SET);
-  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
+  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
 
   return;
 }
@@ -225,13 +224,13 @@ static fs_llist_t* _traverse_to_dir(fs_filesystem_t* fs, char** argv,
     return fs->root->children;
   }
 
-  for (int i = 0; i < argc; i++) // '/something[/others ...]'
+  for (int i = 0; i < argc; i++) // '/something[/others ...]' 
     if (!(f = _find_file_in_layer(f, argv[i])))
       return NULL;
 
   fs->cwd = (fs_file_t*)f->data;
 
-  return fs->cwd->children;
+  return f;
 }
 
 static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
@@ -242,21 +241,21 @@ static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
   fs_file_t* file = NULL;
   int i = 0;
 
-  for (; i < argc - 1; i++) { // '/something[/others ...]'
+  for (; i < argc - 1; i++)  // '[/others ...]/last' 
     if (!(f = _find_file_in_layer(f, argv[i])))
       return NULL;
-  }
 
   // last component:
   //  - return the file if found
   //  - return the directory where the file does not exist
-  if (f)
+  if (f && argc > 1)
     file = (fs_file_t*)f->data;
 
   fs->cwd = file && file->attrs.is_directory ? file : fs->root;
 
-  if (!(f2 = _find_file_in_layer(f, argv[i])))
+  if (!(f2 = _find_file_in_layer(f, argv[i]))) 
     return f;
+
   return f2;
 }
 
@@ -268,28 +267,25 @@ fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
   char** argv = fs_utils_splitpath(root, &argc);
 
   fs_llist_t* dir = _traverse_to_dir(fs, argv, argc);
-  fs_llist_t* file = _find_file_in_layer(dir, fname);
-
-  // ERROR fs->root->children de fato representa os children do
-  //       diretorio. Outros diretórios são apenas arquivos. Deste
-  //       modo, dir->next nao rola.
+  fs_llist_t* file = _find_file_in_layer(fs->cwd->children, fname);
 
   FREE_ARR(argv, argc);
 
   return file ? (fs_file_t*)file->data : NULL;
 }
 
-fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
+static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
+                                     fs_file_type type)
 {
   unsigned n = 0;
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   unsigned argc = 0;
   char** argv = fs_utils_splitpath(fname, &argc);
 
   // FIXME what about passing argv and argc to 'traverse'?
   // FIXME verify if file exist
   fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
-  fs_file_t* f = fs_file_create(argv[argc - 1], FS_FILE_REGULAR, fs->cwd);
+  fs_file_t* f = fs_file_create(argv[argc - 1], type, fs->cwd);
+
 
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
@@ -301,8 +297,8 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
                  fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
                  SEEK_SET),
           "fseek: ");
-  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   FREE_ARR(argv, argc);
@@ -310,11 +306,19 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
   return f;
 }
 
+fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
+{
+  return _filesystem_mkfile(fs, fname, FS_FILE_REGULAR);
+}
+
+fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
+{
+  return _filesystem_mkfile(fs, fname, FS_FILE_DIRECTORY);
+}
+
 int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
 {
-  // TODO split path and get to the directory
   int n = 0;
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
   unsigned argc = 0;
   char** argv = fs_utils_splitpath(path, &argc);
   fs_llist_t* file = _traverse_to_file(fs, argv, argc);
@@ -335,8 +339,8 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
                  fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
                  SEEK_SET),
           "fseek: ");
-  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   FREE_ARR(argv, argc);
@@ -411,9 +415,9 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
           "fseek: ");
 
   // persist directory block
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  written = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(block_buf, sizeof(uint8_t), written, fs->file) == written, "");
+  written = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), written, fs->file) == written,
+          "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   return file;
@@ -458,29 +462,59 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   FREE_ARR(argv, argc);
 }
 
-fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
+static void _remove_dir_content(fs_llist_t* d)
 {
-  unsigned n = 0;
+  fs_llist_t* td = NULL;
+  fs_file_t* f = NULL;
+
+  while (d) {
+    f = (fs_file_t*)d->data;
+
+    if (f->attrs.is_directory)
+      _remove_dir_content(f->children);
+
+    td = d;
+    d = d->next;
+    td->next = NULL;
+    fs_llist_destroy(td, fs_file_destructor);
+  }
+}
+
+int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
+{
+  int n = 0;
   unsigned argc = 0;
-  uint8_t block_buf[FS_BLOCK_SIZE] = { 0 };
-  char** argv = fs_utils_splitpath(fname, &argc);
-  fs_file_t* f = fs_file_create(argv[0], FS_FILE_DIRECTORY, fs->cwd);
+  char** argv = fs_utils_splitpath(path, &argc);
+  fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
+  fs_file_t* file =  NULL;
 
-  fs_file_addchild(fs->cwd, f);
-  f->parent = fs->cwd;
-  f->fblock = fs_fat_addfile(fs->fat);
 
-  // persist updated directory entry
-  // compute the correct position and write over
+  if (!dir) {
+    FREE_ARR(argv, argc);
+    return 0;
+  }
+
+  file = (fs_file_t*)dir->data;
+  _remove_dir_content(file->children);
+  fs_llist_remove(fs->cwd->children, dir);
+  /* fs_llist_destroy(dir, fs_file_destructor); */
+
+  dir = NULL;
+  file = NULL;
+
+  fs->cwd->children_count--;
+  if (!fs->cwd->children_count)
+    fs->cwd->children = NULL;
+
   PASSERT(~fseek(fs->file,
                  fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
                  SEEK_SET),
           "fseek: ");
-  n = fs_file_serialize_dir(fs->cwd, block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
   PASSERT(fflush(fs->file) != EOF, "fflush: ");
 
   FREE_ARR(argv, argc);
 
-  return f;
+  return 1;
 }

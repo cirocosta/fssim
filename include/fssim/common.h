@@ -2,6 +2,7 @@
 #define FSSIM_COMMON_H
 
 #define KGRN "\x1B[32m"
+#define KBRED "\x1B[31;1m"
 #define KRESET "\033[0m"
 
 #define CHECK_RBIT(__var, __pos) ((__var) & (1 << (__pos)))
@@ -64,7 +65,7 @@
       VALGRIND_PRINTF_BACKTRACE("\nStack trace @ %s(), %d", __func__,          \
                                 __LINE__);                                     \
       fprintf(stderr, "\n" __BASE_FILE__ ": %2d\n", __LINE__);                 \
-      fprintf(stderr, "Assertion `%s` failed\n", #__cond);                     \
+      fprintf(stderr, KBRED "Assertion `%s` failed\n" KRESET, #__cond);        \
       fprintf(stderr, "\t" __msg "\n", ##__VA_ARGS__);                         \
       exit(EXIT_FAILURE);                                                      \
     }                                                                          \
