@@ -342,7 +342,7 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
     return 0;
   }
 
-  fs_llist_remove(fs->cwd->children, file);
+  fs->cwd->children = fs_llist_remove(fs->cwd->children, file);
   fs_llist_destroy(file, fs_file_destructor);
   fs->cwd->children_count--;
 
