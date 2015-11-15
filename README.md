@@ -44,6 +44,48 @@ $ make -j5    # concurrent build - 4core machine
 $ ctest -j4   # concurrent test  - 4core machine
 ```
 
+### Example
+
+```sh
+# generate a ~42MB file
+$ dd if=/dev/urandom of=/tmp/sample.txt bs=4M count=10
+10+0 records in
+10+0 records out
+41943040 bytes (42 MB) copied, 4,33719 s, 9,7 MB/s
+
+$ du -h /tmp/sample.txt 
+40M /tmp/sample.txt
+
+# go to the fs
+$ basename $(pwd)
+build
+$ ./src/fssim
+[ep3] mount /tmp/fssim
+Filesystem successfully mounted at `/tmp/fssim`
+
+[ep3] ls /
+d   4.0KB 1969-12-31 21:00 .         
+d   4.0KB 1969-12-31 21:00 .. 
+
+[ep3] df
+Files:              0
+Directories:        0
+Free Space:     100.0MB
+Wasted Space:     0.0 B
+
+[ep3] cp /tmp/sample.txt /sample.txt
+[ep3] ls /
+d   4.0KB 1969-12-31 21:00 .         
+d   4.0KB 1969-12-31 21:00 ..        
+f  40.0MB 2015-11-15 14:24 sample.txt
+
+[ep3] df
+Files:              1
+Directories:        0
+Free Space:      60.0MB
+Wasted Space:     0.0 B
+```
+
 ## Cli
 
 ```sh

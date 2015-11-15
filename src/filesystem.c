@@ -114,7 +114,6 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
   }
 }
 
-
 int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
                                        int n)
 {
@@ -192,9 +191,12 @@ static fs_llist_t* _traverse_to_dir(fs_filesystem_t* fs, char** argv,
     return fs->root->children;
   }
 
-  for (int i = 0; i < argc; i++) // '/something[/others ...]'
-    if (!(f = _find_file_in_layer(f, argv[i])))
+  for (int i = 0; i < argc; i++) { // '/something[/others ...]'
+    if (!(f = _find_file_in_layer(f, argv[i]))) {
+      fs->cwd = NULL;
       return NULL;
+    }
+  }
 
   fs->cwd = (fs_file_t*)f->data;
 
@@ -273,7 +275,6 @@ static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
   return f;
 }
 
-// FIXME horrible
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n)
 {
@@ -283,6 +284,14 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   unsigned argc = 0;
   char** argv = fs_utils_splitpath(abspath, &argc);
   fs_llist_t* child = _traverse_to_dir(fs, argv, argc);
+
+  if (!fs->cwd) {
+    fprintf(stderr, "\nDirectory `%s` not found.\n", abspath);
+    FREE_ARR(argv, argc);
+    fs->cwd = fs->root;
+
+    return;
+  }
 
   fs_utils_fsize2str(fs->cwd->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
   fs_utils_secs2str(fs->cwd->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
@@ -296,7 +305,6 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       mtime_buf, "..");
 
   while (child) {
-    // TODO separete this into a function (in file.h)
     fs_file_t* file = (fs_file_t*)child->data;
 
     fs_utils_fsize2str(file->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
@@ -311,7 +319,6 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
 
   FREE_ARR(argv, argc);
 }
-
 
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 {
@@ -483,9 +490,9 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
   }
 
   file = (fs_file_t*)dir->data;
-  fs_llist_remove(fs->cwd->children, dir);
-  fs_llist_destroy(dir, fs_file_destructor);
 
+  fs->cwd->children = fs_llist_remove(fs->cwd->children, dir);
+  fs_llist_destroy(dir, fs_file_destructor);
   dir = NULL;
   file = NULL;
 

@@ -44,4 +44,6 @@ typedef enum fs_file_type {
 
 #define FS_DF_FORMAT_SIZE sizeof(FS_DF_FORMAT) + 22
 
+#define FS_OFFSET_FILE_ENTRY 32
+
 #endif

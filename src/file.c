@@ -50,7 +50,8 @@ void fs_file_destroy(fs_file_t* file)
 
 int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
 {
-  int to_write = 32 + file->children_count * 32;
+  int to_write =
+      FS_OFFSET_FILE_ENTRY + file->children_count * FS_OFFSET_FILE_ENTRY;
 
   ASSERT(n >= to_write, "`buf` must at least have %u bytes remaining. Has %d",
          to_write, n);
@@ -64,7 +65,8 @@ int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
   counter++;
 
   while (tmp) {
-    offset = counter * 32;
+    offset = counter * FS_OFFSET_FILE_ENTRY;
+    LOGERR("tmp = %p", tmp);
     curr_file = (fs_file_t*)tmp->data;
 
     serialize_uint8_t(buf + offset, curr_file->attrs.is_directory);
@@ -94,7 +96,7 @@ void fs_file_load_dir(fs_file_t* file, unsigned char* buf)
     *new_file = fs_zeroed_file;
     new_file->attrs = fs_zeroed_file_attrs;
 
-    offset = counter * 32;
+    offset = counter * FS_OFFSET_FILE_ENTRY;
 
     new_file->attrs.is_directory = deserialize_uint8_t(buf + offset);
     memcpy(new_file->attrs.fname, buf + offset + 1, 11);
@@ -113,8 +115,7 @@ void fs_file_load_dir(fs_file_t* file, unsigned char* buf)
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
 {
   ASSERT(dir->attrs.is_directory == 1,
-         "File `%s` must be of type FS_FILE_DIRECTORY",
-         dir->attrs.fname);
+         "File `%s` must be of type FS_FILE_DIRECTORY", dir->attrs.fname);
   other->parent = dir;
 
   if (!dir->children)

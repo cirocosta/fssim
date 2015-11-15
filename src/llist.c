@@ -41,12 +41,17 @@ fs_llist_t* fs_llist_append(fs_llist_t* a, fs_llist_t* b)
   return a;
 }
 
-int fs_llist_remove(fs_llist_t* a, fs_llist_t* b)
+
+fs_llist_t* fs_llist_remove(fs_llist_t* a, fs_llist_t* b)
 {
   fs_llist_t* tmp = a;
+ 
+  if (a == b) {
+    tmp = a->next;
+    a->next = NULL;
 
-  if (a == b)
-    return 1;
+    return tmp;
+  }
 
   while (tmp->next != NULL) {
     if (tmp->next != b) {
@@ -56,8 +61,8 @@ int fs_llist_remove(fs_llist_t* a, fs_llist_t* b)
 
     tmp->next = b->next;
     b->next = NULL;
-    return 1;
+    return a;
   }
 
-  return 0;
+  return NULL;
 }

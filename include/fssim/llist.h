@@ -29,7 +29,13 @@ void fs_llist_destroy(fs_llist_t* list, fs_llist_func destructor);
  */
 void fs_llist_remove_next(fs_llist_t* list);
 
-int fs_llist_remove(fs_llist_t* a, fs_llist_t* b);
+/**
+ * Removes a given element `b` from a list that 
+ * starts at `a`.
+ * If `b` corresponds to the first element (==a),
+ * returns next.
+ */
+fs_llist_t* fs_llist_remove(fs_llist_t* a, fs_llist_t* b);
 
 /**
  * Appends list `b` to list `a`
