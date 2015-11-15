@@ -55,11 +55,10 @@ const static fs_cli_command_t FS_CLI_COMMANDS[] = {
 };
 
 void fs_cli_run();
-fs_cli_command fs_cli_search_command(const char* cmd);
 
 const static char* FS_CLI_HELP =
-    "USAGE: `$ ./fssim`"
-    "  Starts a prompt which accepts the following commands:"
+    "\nUSAGE: `$ ./fssim`\n"
+    "  Starts a prompt which accepts the following commands:\n"
     "\n"
     "COMMANDS:\n"
     "  mount <fname>         mounts the fs in the given <fname>. In\n"
@@ -83,7 +82,7 @@ const static char* FS_CLI_HELP =
     "\n"
     "  ls <dir>              lists the files and directories 'below'\n"
     "                        <dir>, showing $name, $size, $last_mod for\n"
-    "                        files and an indicator for directories."
+    "                        files and an indicator for directories.\n"
     "\n"
     "  find <dir> <fname>    taking <dir> as root, recursively searches\n"
     "                        for a file named <fname>\n"
@@ -105,6 +104,7 @@ const static char* FS_CLI_HELP =
     "\n"
     "AUTHOR:\n"
     "  Written by Ciro S. Costa <ciro dot costa at usp dot br>.\n"
-    "  See `https://github.com/cirocosta/fssim`. Licensed with MPLv2.\n";
+    "  See `https://github.com/cirocosta/fssim`. Licensed with MPLv2.\n"
+    "\n";
 
 #endif

@@ -7,15 +7,17 @@
 
 
 - [Running](#running)
-- [Inner Workings](#inner-workings)
+- [Cli](#cli)
+- [Under the Hood](#under-the-hood)
   - [FS](#fs)
   - [Flow](#flow)
   - [File Attributes](#file-attributes)
-- [Cli](#cli)
-- [Block device Structure](#block-device-structure)
-  - [Overview](#overview)
+  - [Block device Structure](#block-device-structure)
+    - [Overview](#overview)
   - [Files](#files)
   - [Directories](#directories)
+- [Utilities](#utilities)
+  - [LS](#ls)
 - [LICENSE](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -27,7 +29,9 @@ This project depends on `cmake` for generating Make files and asserting the requ
 ```sh
 $ mkdir build && cd $_
 $ cmake ..
-$ ./fssim
+
+$ make -j5      # concurrent build - 4core machine
+$ ./src/fssim
 ```
 
 If you wish to test the project as well you might be interested on having the verbose output when a test fails. To enable such feature, add the following variable to your environment and run `cmake` w/ `Debug` set up:
@@ -35,57 +39,10 @@ If you wish to test the project as well you might be interested on having the ve
 ```
 $ export CTEST_OUTPUT_ON_FAILURE=1
 $ cmake -DCMAKE_BUILD_TYPE=Debug ..
+
+$ make -j5    # concurrent build - 4core machine
+$ ctest -j4   # concurrent test  - 4core machine
 ```
-
-## Inner Workings
-
-### FS
-
-The filesystem represents a unique partition of a disk without the booting related stuff that a normal partition (in a normal disk) would have. It supports up to 100MB of both regular files and metadata. Its blocks are of 4KB each (being the block the granularity).
-
-It's storage is done using FAT (File Allocation Table), having the root at `/` and using `/` as the hierarchy separator character. Free storage management is implemented using bitmapping. 
-
-Each directory is a list with an entry for each file inside the directory.
-
-### Flow
-
-```
-filepath
-  |
-  |      (dir struct)                     (f_index struct)
-  |     .-----------.                    .----------------.
-  '---> |           |                    |                |
-        |           |                    +----------------+
-        |           |              .---> |  &data_blocks  |
-        +-----------+              |     +----------------+
-        |    FILE   |---(file_no)--'     |                |
-        +-----------+                    |                |
-        |___________|                    |                |
-                                         |________________|
-
-
-    |  path resolution  |             |   blocks reading    |
-    '-------------------'             '---------------------'
-      happens at open()                   
-           time
-  
-``` 
-
-- `touch`: creates a file with no data, setting some attributes and adding a reference to it in the containing directory.
-- `rm`: frees space, removes entry in the directory as well as fat
-- `open`: 
-
-### File Attributes
-
-Simulated files or directories (which are files) contain:
--   name
--   size in bytes (except for directories)
--   creation time
--   modif time
--   last access time
--   data
-
-These attributes are stuck with file entries in directory files.
 
 ## Cli
 
@@ -143,10 +100,61 @@ AUTHOR:
   See `https://github.com/cirocosta/fssim`. Licensed with MPLv2.
 ```
 
+## Under the Hood
 
-## Block device Structure
+### FS
 
-### Overview
+The filesystem represents a unique partition of a disk without the booting related stuff that a normal partition (in a normal disk) would have. It supports up to 100MB of both regular files and metadata. Its blocks are of 4KB each (being the block the granularity).
+
+It's storage is done using FAT (File Allocation Table), having the root at `/` and using `/` as the hierarchy separator character. Free storage management is implemented using bitmapping. 
+
+Each directory is a list with an entry for each file inside the directory.
+
+### Flow
+
+```
+filepath
+  |
+  |      (dir struct)                     (f_index struct)
+  |     .-----------.                    .----------------.
+  '---> |           |                    |                |
+        |           |                    +----------------+
+        |           |              .---> |  &data_blocks  |
+        +-----------+              |     +----------------+
+        |    FILE   |---(file_no)--'     |                |
+        +-----------+                    |                |
+        |___________|                    |                |
+                                         |________________|
+
+
+    |  path resolution  |             |   blocks reading    |
+    '-------------------'             '---------------------'
+      happens at open()                   
+           time
+  
+``` 
+
+- `touch`: creates a file with no data, setting some attributes and adding a reference to it in the containing directory.
+- `rm`: frees space, removes entry in the directory as well as fat
+- `open`: 
+
+### File Attributes
+
+Simulated files or directories (which are files) contain:
+-   name
+-   size in bytes (except for directories)
+-   creation time
+-   modif time
+-   last access time
+-   data
+
+These attributes are stuck with file entries in directory files.
+
+
+
+### Block device Structure
+
+#### Overview
 
 ```
   (size in B)           
@@ -244,9 +252,14 @@ Being serialized into and deserialized from:
 
 As a design decision, directories must fit in a single block (4KB) only. This limits each layer in the hierarchy tree to support a maximum of 127 entries (files or directories) as mentioned but directory nesting is only limited by disk limit.
 
-## Utilities
 
-### LS
+### Utilities
+
+Each one of those commands in `cli` are separated utilities. They operate on top of the filesystem mutating it or not conforming to the state of the system. In this section we despict some of them.
+
+#### LS
+
+Each line if formatted according to:
 
 ```
            36 characters
@@ -257,8 +270,6 @@ As a design decision, directories must fit in a single block (4KB) only. This li
   |     | |   | |       | |    |
   is_dir  size  last_mod  fname
 ```
-
-
 
 
 ## LICENSE

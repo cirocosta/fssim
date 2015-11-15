@@ -106,8 +106,12 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
 
   if (!fs_utils_fexists(fname))
     fs_filesystem_mount_new(fs, fname);
-  else
+  else {
+    fprintf(stderr, "File `%s` already exists.\n"
+                    "Mounting on top of it!\n",
+            fname);
     fs_filesystem_mount_existing(fs, fname);
+  }
 }
 
 // FIXME horrible
@@ -506,7 +510,6 @@ int fs_filesystem_df(fs_filesystem_t* fs, char* buf, size_t n)
   int written = 0;
 
   fs_fsinfo_calculate(&info, fs->root);
-  LOGERR("wastedspace = %u", info.wastedspace);
 
   fs_utils_fsize2str(fs->blocks_num * fs->block_size - info.usedspace,
                      freespace_buf, FS_FSIZE_FORMAT_SIZE);

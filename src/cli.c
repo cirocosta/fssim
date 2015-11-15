@@ -16,6 +16,27 @@
     return 1;                                                                  \
   }
 
+static fs_cli_command fs_cli_search_command(const char* cmd)
+{
+  int bottom = 0;
+  int top = FS_CLI_COMMANDS_SIZE - 1;
+  int mid;
+  int res;
+
+  while (bottom <= top) {
+    mid = (bottom + top) / 2;
+
+    if (!(res = strcmp(FS_CLI_COMMANDS[mid].key, cmd)))
+      return FS_CLI_COMMANDS[mid].command;
+    else if (res > 0)
+      top = mid - 1;
+    else if (res < 0)
+      bottom = mid + 1;
+  }
+
+  return NULL;
+}
+
 void fs_cli_run()
 {
   unsigned argc = 0;
@@ -58,27 +79,6 @@ void fs_cli_run()
   fs_simulator_destroy(sim);
 }
 
-fs_cli_command fs_cli_search_command(const char* cmd)
-{
-  int bottom = 0;
-  int top = FS_CLI_COMMANDS_SIZE - 1;
-  int mid;
-  int res;
-
-  while (bottom <= top) {
-    mid = (bottom + top) / 2;
-
-    if (!(res = strcmp(FS_CLI_COMMANDS[mid].key, cmd)))
-      return FS_CLI_COMMANDS[mid].command;
-    else if (res > 0)
-      top = mid - 1;
-    else if (res < 0)
-      bottom = mid + 1;
-  }
-
-  return NULL;
-}
-
 int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   _F_CHECK_ARGC(argc, 2);
@@ -90,7 +90,7 @@ int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim)
             sim->mounted_at);
     return 1;
   }
-
+  
   sim->fs = fs_filesystem_create(FS_BLOCKS_NUM);
   fs_filesystem_mount(sim->fs, argv[1]);
   strncpy(sim->mounted_at, argv[1], PATH_MAX);
@@ -104,6 +104,8 @@ int fs_cli_command_cp(char** argv, unsigned argc, fs_simulator_t* sim)
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 3);
 
+  fs_filesystem_cp(sim->fs, argv[1], argv[2]);
+
   return 0;
 }
 
@@ -111,6 +113,8 @@ int fs_cli_command_mkdir(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 2);
+
+  fs_filesystem_mkdir(sim->fs, argv[1]);
 
   return 0;
 }
@@ -120,6 +124,8 @@ int fs_cli_command_rmdir(char** argv, unsigned argc, fs_simulator_t* sim)
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 2);
 
+  fs_filesystem_rmdir(sim->fs, argv[1]);
+
   return 0;
 }
 
@@ -127,6 +133,8 @@ int fs_cli_command_cat(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 2);
+
+  fs_filesystem_cat(sim->fs, argv[1], STDERR_FILENO);
 
   return 0;
 }
@@ -136,6 +144,8 @@ int fs_cli_command_touch(char** argv, unsigned argc, fs_simulator_t* sim)
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 2);
 
+  fs_filesystem_touch(sim->fs, argv[1]);
+
   return 0;
 }
 
@@ -143,6 +153,8 @@ int fs_cli_command_rm(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 2);
+
+  fs_filesystem_rm(sim->fs, argv[1]);
 
   return 0;
 }
@@ -152,6 +164,11 @@ int fs_cli_command_ls(char** argv, unsigned argc, fs_simulator_t* sim)
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 2);
 
+  char buf[FS_LS_FORMAT_SIZE * 64] = { 0 };
+
+  fs_filesystem_ls(sim->fs, argv[1], buf, FS_LS_FORMAT_SIZE * 64);
+  fprintf(stderr, "%s", buf);
+
   return 0;
 }
 
@@ -160,12 +177,20 @@ int fs_cli_command_find(char** argv, unsigned argc, fs_simulator_t* sim)
   _F_CHECK_MOUNTED(sim);
   _F_CHECK_ARGC(argc, 3);
 
+  // TODO FIXME 
+  LOGERR("Not correctly implemented yet");
+
   return 0;
 }
 
 int fs_cli_command_df(char** argv, unsigned argc, fs_simulator_t* sim)
 {
   _F_CHECK_MOUNTED(sim);
+  char buf[FS_DF_FORMAT_SIZE] = { 0 };
+
+  fs_filesystem_df(sim->fs, buf, FS_DF_FORMAT_SIZE);
+  fprintf(stderr, "%s", buf);
+
   return 0;
 }
 
@@ -188,6 +213,13 @@ int fs_cli_command_help(char** argv, unsigned argc, fs_simulator_t* sim)
 
 int fs_cli_command_sai(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  if (sim->fs) {
+    fprintf(stderr, "Filesystem at `%s` was still mounted.\n"
+                    "The simulator will now unmount it automatically.\n",
+            sim->mounted_at);
+    fs_cli_command_unmount(NULL, 1, sim);
+  }
+
   fprintf(stderr, "%s\n", "Bye Bye!");
   exit(0);
 }
