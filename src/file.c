@@ -113,7 +113,8 @@ void fs_file_load_dir(fs_file_t* file, unsigned char* buf)
 void fs_file_addchild(fs_file_t* dir, fs_file_t* other)
 {
   ASSERT(dir->attrs.is_directory == 1,
-         "File must be of type FS_FILE_DIRECTORY");
+         "File `%s` must be of type FS_FILE_DIRECTORY",
+         dir->attrs.fname);
   other->parent = dir;
 
   if (!dir->children)

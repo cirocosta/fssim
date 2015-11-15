@@ -114,42 +114,6 @@ void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname)
   }
 }
 
-// FIXME horrible
-void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
-                      size_t n)
-{
-  int written = 0;
-  char mtime_buf[FS_DATE_FORMAT_SIZE] = { 0 };
-  char fsize_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
-  fs_llist_t* child = fs->cwd->children;
-
-  // TODO traverse
-
-  fs_utils_fsize2str(fs->cwd->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
-  fs_utils_secs2str(fs->cwd->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
-
-  written += snprintf(buf + written, n - written, FS_LS_FORMAT,
-                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
-                      mtime_buf, ".");
-
-  written += snprintf(buf + written, n - written, FS_LS_FORMAT,
-                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
-                      mtime_buf, "..");
-
-  while (child) {
-    // TODO separete this into a function (in file.h)
-    fs_file_t* file = (fs_file_t*)child->data;
-
-    fs_utils_fsize2str(file->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
-    fs_utils_secs2str(file->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
-
-    written += snprintf(buf + written, n, FS_LS_FORMAT,
-                        file->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
-                        mtime_buf, file->attrs.fname);
-
-    child = child->next;
-  }
-}
 
 int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
                                        int n)
@@ -308,6 +272,46 @@ static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
 
   return f;
 }
+
+// FIXME horrible
+void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
+                      size_t n)
+{
+  int written = 0;
+  char mtime_buf[FS_DATE_FORMAT_SIZE] = { 0 };
+  char fsize_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(abspath, &argc);
+  fs_llist_t* child = _traverse_to_dir(fs, argv, argc);
+
+  fs_utils_fsize2str(fs->cwd->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
+  fs_utils_secs2str(fs->cwd->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
+
+  written += snprintf(buf + written, n - written, FS_LS_FORMAT,
+                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
+                      mtime_buf, ".");
+
+  written += snprintf(buf + written, n - written, FS_LS_FORMAT,
+                      fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
+                      mtime_buf, "..");
+
+  while (child) {
+    // TODO separete this into a function (in file.h)
+    fs_file_t* file = (fs_file_t*)child->data;
+
+    fs_utils_fsize2str(file->attrs.size, fsize_buf, FS_FSIZE_FORMAT_SIZE);
+    fs_utils_secs2str(file->attrs.mtime, mtime_buf, FS_DATE_FORMAT_SIZE);
+
+    written += snprintf(buf + written, n, FS_LS_FORMAT,
+                        file->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
+                        mtime_buf, file->attrs.fname);
+
+    child = child->next;
+  }
+
+  FREE_ARR(argv, argc);
+}
+
 
 fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 {

@@ -452,7 +452,7 @@ void test20()
                          "Wasted Space:     0.0 B\n";
   char buf[FS_DF_FORMAT_SIZE] = { 0 };
   // 100 blocks ==> 4KB * 100 ==> 400KB.
-  fs_filesystem_t* fs = fs_filesystem_create(100); 
+  fs_filesystem_t* fs = fs_filesystem_create(100);
 
   fs_utils_fdelete(FS_TEST_FNAME);
   fs_filesystem_mount(fs, FS_TEST_FNAME);
@@ -464,6 +464,36 @@ void test20()
   fs_filesystem_df(fs, buf, FS_DF_FORMAT_SIZE);
 
   ASSERT(!strcmp(buf, expected), "`\n%s\n` != `\n%s\n`", buf, expected);
+
+  fs_filesystem_destroy(fs);
+}
+
+void test21()
+{
+  fs_file_t* file = NULL;
+  const char* FNAME = "test21f";
+  const char* FNAME_FS = "/test21f";
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  _write_dumb_file(FNAME, 1 * FS_KILOBYTE);
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_cp(fs, FNAME, FNAME_FS);
+  fs_filesystem_mkdir(fs, "/lol");
+
+  ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
+  ASSERT(file->attrs.size == 1 * FS_KILOBYTE, "has the correct size");
+
+  fs_filesystem_destroy(fs);
+
+  fs = NULL;
+  fs = fs_filesystem_create(0);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  ASSERT((file = fs_filesystem_find(fs, "/", FNAME)), "file must be present");
+  ASSERT(file->attrs.size == 1 * FS_KILOBYTE, "has the correct size");
+  ASSERT((file = fs_filesystem_find(fs, "/", "lol")), "dir must be present");
+  ASSERT(file->attrs.is_directory, "dir must be dir");
 
   fs_filesystem_destroy(fs);
 }
@@ -486,8 +516,9 @@ int main(int argc, char* argv[])
   TEST(test16, "cat which actually copies out to real fs");
   TEST(test17, "dir - single level");
   TEST(test18, "dir - multiple levels");
-  TEST(test19, "multiple mkdir && rmdir");
-  TEST(test20, "df");
+  TEST(test19, "multiple `mkdir` && `rmdir`");
+  TEST(test20, "`df` display");
+  TEST(test21, "restore `fs` after `cp`");
 
   return 0;
 }
