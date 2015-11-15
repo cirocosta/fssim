@@ -10,11 +10,11 @@
 #define SET_LBIT(__var, __pos)                                                 \
   do {                                                                         \
     __var ^= (128 >> __pos);                                                   \
-  } while (0);
+  } while (0)
 #define SET_RBIT(__var, __pos)                                                 \
   do {                                                                         \
     __var ^= (1 << __pos);                                                     \
-  } while (0);
+  } while (0)
 
 #include "fssim/constants.h"
 

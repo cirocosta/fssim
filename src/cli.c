@@ -1,5 +1,21 @@
 #include "fssim/cli.h"
 
+#define _F_CHECK_MOUNTED(__simulator)                                          \
+  if (!__simulator->fs) {                                                      \
+    fprintf(stderr, "%s\n", "Filesystem must have been previously mounted.\n"  \
+                            "Enter `help` if you need help.\n");               \
+    return 1;                                                                  \
+  }
+
+#define _F_CHECK_ARGC(__argc, __n)                                             \
+  if (__argc != __n) {                                                         \
+    fprintf(stderr, "ERROR: Wrong arguments specification\n"                   \
+                    "Must have `%d` arguments.\n"                              \
+                    "Enter `help` if you need help.\n",                        \
+            __n);                                                              \
+    return 1;                                                                  \
+  }
+
 void fs_cli_run()
 {
   unsigned argc = 0;
@@ -65,71 +81,99 @@ fs_cli_command fs_cli_search_command(const char* cmd)
 
 int fs_cli_command_mount(char** argv, unsigned argc, fs_simulator_t* sim)
 {
-  if (argc != 2) {
-    fprintf(stderr, "ERROR: Wrong arguments specification\n"
-                    "Must be: mount <fname>\n");
+  _F_CHECK_ARGC(argc, 2);
+
+  if (sim->fs) {
+    fprintf(stderr, "Filesystem already mounted at %s.\n"
+                    "If you wish to mount another fs, enter `unmount` first.\n"
+                    "Enter `help` if you need help.\n",
+            sim->mounted_at);
     return 1;
   }
 
   sim->fs = fs_filesystem_create(FS_BLOCKS_NUM);
-  /* fs_filesystem_mount(sim->fs, argv[1]); */
+  fs_filesystem_mount(sim->fs, argv[1]);
+  strncpy(sim->mounted_at, argv[1], PATH_MAX);
+  fprintf(stderr, "Filesystem sucessfully mounted at %s\n", sim->mounted_at);
 
   return 0;
 }
 
 int fs_cli_command_cp(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 3);
+
   return 0;
 }
 
 int fs_cli_command_mkdir(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 2);
+
   return 0;
 }
 
 int fs_cli_command_rmdir(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 2);
+
   return 0;
 }
 
 int fs_cli_command_cat(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 2);
+
   return 0;
 }
 
 int fs_cli_command_touch(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 2);
+
   return 0;
 }
 
 int fs_cli_command_rm(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 2);
+
   return 0;
 }
 
 int fs_cli_command_ls(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 2);
+
   return 0;
 }
 
 int fs_cli_command_find(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 3);
+
   return 0;
 }
 
 int fs_cli_command_df(char** argv, unsigned argc, fs_simulator_t* sim)
 {
+  _F_CHECK_MOUNTED(sim);
   return 0;
 }
 
 int fs_cli_command_unmount(char** argv, unsigned argc, fs_simulator_t* sim)
 {
-  if (!sim->fs) {
-    fprintf(stderr, "%s\n", "Can't perform `unmount` without a FS mounted;");
-    return 0;
-  }
+  _F_CHECK_MOUNTED(sim);
+  _F_CHECK_ARGC(argc, 1);
 
-  /* fs_filesystem_unmount(sim->fs); */
   fs_filesystem_destroy(sim->fs);
   sim->fs = NULL;
 
