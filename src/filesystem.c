@@ -497,3 +497,30 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
 
   return 1;
 }
+
+int fs_filesystem_count_freespace(fs_filesystem_t* fs) { 
+   
+
+
+
+  return 0;
+}
+int fs_filesystem_count_wastedspace(fs_filesystem_t* fs) { return 0; }
+
+int fs_filesystem_df(fs_filesystem_t* fs, char* buf, size_t n)
+{
+  char freespace_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
+  char wastedspace_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
+  int written = 0;
+
+  /* fs_utils_fsize2str(fs_filesystem_count_freespace(fs), freespace_buf, */
+  /*                    FS_FSIZE_FORMAT_SIZE); */
+  /* fs_utils_fsize2str(fs_filesystem_count_wastedspace(fs), wastedspace_buf, */
+  /*                    FS_FSIZE_FORMAT_SIZE); */
+
+  /* written += snprintf( */
+  /*     buf + written, n - written, FS_DF_FORMAT, fs_file_count_files(fs->root), */
+  /*     fs_file_count_directories(fs->root), freespace_buf, wastedspace_buf); */
+
+  return written;
+}

@@ -3,6 +3,7 @@
 
 #include "fssim/common.h"
 #include <stdint.h>
+#include <stdlib.h>
 
 #define FS_BUFSIZE 4096
 #define FS_KILOBYTE 1024
@@ -34,5 +35,13 @@ typedef enum fs_file_type {
   FS_FILE_REGULAR,
   FS_FILE_ROOT_DIR
 } fs_file_type;
+
+#define FS_DF_FORMAT                                                           \
+  "Files:          %5u\n"                                                      \
+  "Directories:    %5u\n"                                                      \
+  "Free Space:     %6s\n"                                                      \
+  "Wasted Space:   %6s\n"
+
+const static size_t FS_DF_FORMAT_SIZE = sizeof FS_DF_FORMAT;
 
 #endif

@@ -34,6 +34,8 @@ int fs_filesystem_serialize_superblock(fs_filesystem_t* fs, unsigned char* buf,
                                        int n);
 
 void fs_filesystem_mount(fs_filesystem_t* fs, const char* fname);
+
+// commands
 void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
                       size_t n);
 fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
@@ -45,5 +47,7 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname);
 fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname);
 int fs_filesystem_rm(fs_filesystem_t* fs, const char* path);
 int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path);
+int fs_filesystem_df(fs_filesystem_t* fs, char* buf, size_t n);
+
 
 #endif
