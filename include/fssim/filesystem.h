@@ -4,6 +4,7 @@
 #include "fssim/common.h"
 #include "fssim/fat.h"
 #include "fssim/file.h"
+#include "fssim/fsinfo.h"
 #include "fssim/file_utils.h"
 
 #include <math.h>

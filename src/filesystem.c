@@ -498,29 +498,22 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
   return 1;
 }
 
-int fs_filesystem_count_freespace(fs_filesystem_t* fs) { 
-   
-
-
-
-  return 0;
-}
-int fs_filesystem_count_wastedspace(fs_filesystem_t* fs) { return 0; }
-
 int fs_filesystem_df(fs_filesystem_t* fs, char* buf, size_t n)
 {
+  fs_fsinfo_t info = { 0 };
   char freespace_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
   char wastedspace_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
   int written = 0;
 
-  /* fs_utils_fsize2str(fs_filesystem_count_freespace(fs), freespace_buf, */
-  /*                    FS_FSIZE_FORMAT_SIZE); */
-  /* fs_utils_fsize2str(fs_filesystem_count_wastedspace(fs), wastedspace_buf, */
-  /*                    FS_FSIZE_FORMAT_SIZE); */
+  fs_fsinfo_calculate(&info, fs->root);
+  LOGERR("wastedspace = %u", info.wastedspace);
 
-  /* written += snprintf( */
-  /*     buf + written, n - written, FS_DF_FORMAT, fs_file_count_files(fs->root), */
-  /*     fs_file_count_directories(fs->root), freespace_buf, wastedspace_buf); */
+  fs_utils_fsize2str(fs->blocks_num * fs->block_size - info.usedspace,
+                     freespace_buf, FS_FSIZE_FORMAT_SIZE);
+  fs_utils_fsize2str(info.wastedspace, wastedspace_buf, FS_FSIZE_FORMAT_SIZE);
+
+  written += snprintf(buf + written, n - written, FS_DF_FORMAT, info.files,
+                      info.directories, freespace_buf, wastedspace_buf);
 
   return written;
 }

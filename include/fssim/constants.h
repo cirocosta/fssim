@@ -42,6 +42,6 @@ typedef enum fs_file_type {
   "Free Space:     %6s\n"                                                      \
   "Wasted Space:   %6s\n"
 
-const static size_t FS_DF_FORMAT_SIZE = sizeof FS_DF_FORMAT;
+#define FS_DF_FORMAT_SIZE sizeof(FS_DF_FORMAT) + 22
 
 #endif

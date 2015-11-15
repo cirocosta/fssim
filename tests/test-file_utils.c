@@ -164,6 +164,16 @@ void test10()
   FREE_ARR(argv, argc);
 }
 
+void test11()
+{
+  const char* expected = "  0.0 B";
+  char buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
+
+  fs_utils_fsize2str(0, buf, FS_FSIZE_FORMAT_SIZE);
+
+  ASSERT(!strcmp(expected, buf), "%s != %s", expected, buf);
+}
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "splits path accordingly");
@@ -176,6 +186,7 @@ int main(int argc, char* argv[])
   TEST(test8, "human file size utilities - megabytes");
   TEST(test9, "file allocation");
   TEST(test10, "splits path - trailing slash");
+  TEST(test11, "human file size utilities - 0 Bytes");
 
   return 0;
 }

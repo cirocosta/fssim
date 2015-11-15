@@ -446,10 +446,10 @@ void test19()
 
 void test20()
 {
-  const char* expected = "Files:          0\n"
-                         "Directories:    4\n"
-                         "Free Space:     4MB\n"
-                         "Wasted Space:   0B\n";
+  const char* expected = "Files:              0\n"
+                         "Directories:        4\n"
+                         "Free Space:     384.0KB\n"
+                         "Wasted Space:     0.0 B\n";
   char buf[FS_DF_FORMAT_SIZE] = { 0 };
   // 100 blocks ==> 4KB * 100 ==> 400KB.
   fs_filesystem_t* fs = fs_filesystem_create(100); 
