@@ -1,4 +1,3 @@
-
 include_directories(${fssim_INCLUDE_DIRS})
 
 file(GLOB_RECURSE tests "*.c")

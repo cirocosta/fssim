@@ -26,6 +26,9 @@ SET(${PROJECT_NAME}_LIBRARIES ${LIBRARIES}
   FORCE
 )
 
+# experiments
+add_subdirectory(experiments/)
+
 # test
 if (${fssim_tests})
   enable_testing()
