@@ -427,10 +427,19 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
 
 static void _filesystem_rmfile(fs_filesystem_t* fs, fs_llist_t* file)
 {
-  fs_fat_removefile(fs->fat, ((fs_file_t*)file->data)->fblock);
+  fs_file_t* cwd = fs->cwd;
+  fs_file_t* f = (fs_file_t*)file->data;
+
+  while (f->children) {
+    fs->cwd = f;
+    _filesystem_rmfile(fs, f->children);
+  }
+
+  fs->cwd = cwd;
+
+  fs_fat_removefile(fs->fat, f->fblock);
   fs->cwd->children = fs_llist_remove(fs->cwd->children, file);
   fs_llist_destroy(file, fs_file_destructor);
-  file = NULL;
 
   fs->cwd->children_count--;
   if (!fs->cwd->children_count)

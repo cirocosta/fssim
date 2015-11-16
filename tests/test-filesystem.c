@@ -440,12 +440,17 @@ void test19()
   ASSERT(fs_filesystem_rmdir(fs, "/lol"), "");
   ASSERT(fs->root->children_count == 2, "");
 
-  /* fs_file_t* tmp_dir = fs_filesystem_find(fs, "/", "tmp"); */
-  /* ASSERT(tmp_dir->children_count == 2, ""); */
+  fs_file_t* tmp_dir = fs_filesystem_find(fs, "/", "tmp");
+  ASSERT(tmp_dir->children_count == 2, "");
   fs_filesystem_rmdir(fs, "/tmp");
-  /* ASSERT(fs->root->children_count == 1, ""); */
-  /* ASSERT(fs_filesystem_find(fs, "/", "tmp") == NULL, ""); */
-  /* ASSERT(fs_filesystem_find(fs, "/", "br") == NULL, ""); */
+
+
+  //         _______root
+  //         |       
+  //        hue          
+  ASSERT(fs->root->children_count == 1, "");
+  ASSERT(fs_filesystem_find(fs, "/", "tmp") == NULL, "");
+  ASSERT(fs_filesystem_find(fs, "/", "br") == NULL, "");
 
   fs_filesystem_destroy(fs);
 }
@@ -538,6 +543,9 @@ void test23()
 
   fs_filesystem_mkdir(fs, "/d00");
   fs_filesystem_touch(fs, "/d00/f01");
+  fs_filesystem_touch(fs, "/d00/f99");
+  fs_filesystem_touch(fs, "/d00/f98");
+  fs_filesystem_touch(fs, "/d00/f97");
   fs_filesystem_mkdir(fs, "/d00/d01");
   fs_filesystem_touch(fs, "/d00/d01/f02");
   fs_filesystem_mkdir(fs, "/d00/d01/d02");
@@ -546,8 +554,10 @@ void test23()
 
   fs_fsinfo_calculate(&info, fs->root);
   ASSERT(info.directories == 4, "actually: %d", info.directories);
-  ASSERT(info.files == 3, "actually: %d", info.files);
+  ASSERT(info.files == 6, "actually: %d", info.files);
 
+  info.files = 0;
+  info.directories = 0;
   ASSERT(fs_filesystem_rmdir(fs, "/d00"), "");
   fs_fsinfo_calculate(&info, fs->root);
 
@@ -580,7 +590,7 @@ int main(int argc, char* argv[])
   TEST(test20, "`df` display");
   TEST(test21, "restore `fs` after `cp`");
   TEST(test22, "ls - nested fs");
-  /* TEST(test23, "rmdir - recursively remove directories"); */
+  TEST(test23, "rmdir - recursively remove directories");
 
   return 0;
 }
