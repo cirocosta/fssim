@@ -454,6 +454,12 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   ASSERT((file = fs_filesystem_find(fs, fs->root->attrs.fname, argv[0])),
          "File not found");
 
+  if (file->attrs.is_directory) {
+    fprintf(stderr, "Can't `cat` a directory.\n"
+                    "Enter `help` if you need help\n");
+    return;
+  }
+
   remaining = file->attrs.size;
 
   fflush(fs->file);
@@ -493,6 +499,13 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
   }
 
   file = (fs_file_t*)dir->data;
+
+  if (!file->attrs.is_directory) {
+    fprintf(stderr, "File `%s` is not a directory.\n"
+                    "Enter `help` if you need help.\n",
+            file->attrs.fname);
+    return 0;
+  }
 
   fs->cwd->children = fs_llist_remove(fs->cwd->children, dir);
   fs_llist_destroy(dir, fs_file_destructor);
