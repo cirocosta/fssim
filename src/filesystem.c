@@ -55,21 +55,12 @@ static inline void fs_filesystem_mount_new(fs_filesystem_t* fs,
   fs->buf = calloc(fs->blocks_offset, sizeof(*fs->buf));
   PASSERT(fs->buf, FS_ERR_MALLOC);
 
-  // put in memory SB+FAT+BMP and persist
-  // start of the file
-  n = fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
-  fseek(fs->file, 0, SEEK_SET);
-  PASSERT(fwrite(fs->buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
-
-  // persist root directory
-  // compute the correct position and write
-  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
-  fseek(fs->file, fs->blocks_offset + FS_BLOCK_SIZE * fs->cwd->fblock,
-        SEEK_SET);
-  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "fwrite: ");
+  fs_filesystem_persist_sbfatbmp(fs);
+  fs_filesystem_persist_cwd(fs);
 
   return;
 }
+
 static inline void fs_filesystem_mount_existing(fs_filesystem_t* fs,
                                                 const char* fname)
 {
@@ -262,13 +253,7 @@ static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
 
   // persist updated directory entry
   // compute the correct position and write over
-  PASSERT(~fseek(fs->file,
-                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
-                 SEEK_SET),
-          "fseek: ");
-  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
-  PASSERT(fflush(fs->file) != EOF, "fflush: ");
+  fs_filesystem_persist_cwd(fs);
 
   FREE_ARR(argv, argc);
 
@@ -352,14 +337,7 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
   if (!fs->cwd->children_count)
     fs->cwd->children = NULL;
 
-  PASSERT(~fseek(fs->file,
-                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
-                 SEEK_SET),
-          "fseek: ");
-  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
-  PASSERT(fflush(fs->file) != EOF, "fflush: ");
-
+  fs_filesystem_persist_cwd(fs);
   FREE_ARR(argv, argc);
 
   return 1;
@@ -421,21 +399,8 @@ fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
   PASSERT(fclose(f) == 0, "fclose");
 
   // persist FAT and BMP
-  written = fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
-  fseek(fs->file, 0, SEEK_SET);
-  PASSERT(fwrite(fs->buf, sizeof(uint8_t), written, fs->file) == written,
-          "fwrite: ");
-
-  PASSERT(~fseek(fs->file,
-                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
-                 SEEK_SET),
-          "fseek: ");
-
-  // persist directory block
-  written = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), written, fs->file) == written,
-          "");
-  PASSERT(fflush(fs->file) != EOF, "fflush: ");
+  fs_filesystem_persist_sbfatbmp(fs);
+  fs_filesystem_persist_cwd(fs);
 
   return file;
 }
@@ -516,14 +481,7 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
   if (!fs->cwd->children_count)
     fs->cwd->children = NULL;
 
-  PASSERT(~fseek(fs->file,
-                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
-                 SEEK_SET),
-          "fseek: ");
-  n = fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
-  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
-  PASSERT(fflush(fs->file) != EOF, "fflush: ");
-
+  fs_filesystem_persist_cwd(fs);
   FREE_ARR(argv, argc);
 
   return 1;

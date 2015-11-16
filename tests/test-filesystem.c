@@ -1,5 +1,6 @@
 #include "fssim/common.h"
 #include "fssim/filesystem.h"
+#include "fssim/fsinfo.h"
 
 #define FS_TEST_FNAME "/tmp/test-fssim"
 
@@ -527,6 +528,36 @@ void test22()
   free(buf);
 }
 
+void test23()
+{
+  fs_filesystem_t* fs = fs_filesystem_create(300); // 300 blocks
+  fs_fsinfo_t info = { 0 };
+
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+
+  fs_filesystem_mkdir(fs, "/d00");
+  fs_filesystem_touch(fs, "/d00/f01");
+  fs_filesystem_mkdir(fs, "/d00/d01");
+  fs_filesystem_touch(fs, "/d00/d01/f02");
+  fs_filesystem_mkdir(fs, "/d00/d01/d02");
+  fs_filesystem_touch(fs, "/d00/d01/d02/f03");
+  fs_filesystem_mkdir(fs, "/d00/d01/d02/d03");
+
+  fs_fsinfo_calculate(&info, fs->root);
+  ASSERT(info.directories == 4, "actually: %d", info.directories);
+  ASSERT(info.files == 3, "actually: %d", info.files);
+
+  ASSERT(fs_filesystem_rmdir(fs, "/d00"), "");
+  fs_fsinfo_calculate(&info, fs->root);
+
+  ASSERT(info.directories == 0, "actually, now: %d", info.directories);
+  ASSERT(info.files == 0, "actually, now:: %d", info.files);
+
+  fs_filesystem_destroy(fs);
+}
+
+
 int main(int argc, char* argv[])
 {
   TEST(test1, "creation and deletion");
@@ -549,6 +580,7 @@ int main(int argc, char* argv[])
   TEST(test20, "`df` display");
   TEST(test21, "restore `fs` after `cp`");
   TEST(test22, "ls - nested fs");
+  /* TEST(test23, "rmdir - recursively remove directories"); */
 
   return 0;
 }

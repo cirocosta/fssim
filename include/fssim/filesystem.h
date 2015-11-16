@@ -50,5 +50,31 @@ int fs_filesystem_rm(fs_filesystem_t* fs, const char* path);
 int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path);
 int fs_filesystem_df(fs_filesystem_t* fs, char* buf, size_t n);
 
+static inline int fs_filesystem_persist_sbfatbmp(fs_filesystem_t* fs)
+{
+  int written = 0;
+
+  written += fs_filesystem_serialize(fs, fs->buf, fs->blocks_offset);
+  fseek(fs->file, 0, SEEK_SET);
+  PASSERT(fwrite(fs->buf, sizeof(uint8_t), written, fs->file) == written,
+          "fwrite: ");
+
+  return written;
+}
+
+static inline int fs_filesystem_persist_cwd(fs_filesystem_t* fs)
+{
+  int n = 0;
+
+  PASSERT(~fseek(fs->file,
+                 fs->blocks_offset + (FS_BLOCK_SIZE * fs->cwd->fblock),
+                 SEEK_SET),
+          "fseek: ");
+  n += fs_file_serialize_dir(fs->cwd, fs->block_buf, FS_BLOCK_SIZE);
+  PASSERT(fwrite(fs->block_buf, sizeof(uint8_t), n, fs->file) == n, "");
+  PASSERT(fflush(fs->file) != EOF, "fflush: ");
+
+  return n;
+}
 
 #endif

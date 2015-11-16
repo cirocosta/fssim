@@ -1,5 +1,6 @@
 #include "fssim/filesystem.h"
 #include <time.h>
+#include <string.h>
 
 #define FS_FNAME "/tmp/fssim-exp-0mb"
 #define FNAME_1MB "/tmp/fs-1MB"
@@ -57,16 +58,33 @@ void SETUP()
   fs_utils_fdelete(FS_FNAME);
   g_fs = fs_filesystem_create(FS_BLOCKS_NUM);
   fs_filesystem_mount(g_fs, FS_FNAME);
+
+  switch (g_state) {
+    case 1:
+      break;
+    case 2:
+      fs_filesystem_cp(g_fs, FNAME_10MB, "/xxxx");
+      break;
+    case 3:
+      fs_filesystem_cp(g_fs, FNAME_50MB, "/xxxx");
+      break;
+  }
 }
 
-void TEAR_DOWN() { fs_filesystem_destroy(g_fs); }
+void TEAR_DOWN()
+{
+  fs_filesystem_destroy(g_fs);
+  g_fs = NULL;
+  g_start = 0;
+  g_end = 0;
+}
 
 void e1()
 {
   SETUP();
   TICK();
 
-  fs_filesystem_cp(g_fs, FNAME_10MB, "/fs-1MB");
+  fs_filesystem_cp(g_fs, FNAME_1MB, "/fs-1MB");
 
   TOCK();
   TEAR_DOWN();
@@ -110,7 +128,7 @@ void e4()
 void e5()
 {
   SETUP();
-  fs_filesystem_cp(g_fs, FNAME_1MB, "/fs-10MB");
+  fs_filesystem_cp(g_fs, FNAME_10MB, "/fs-10MB");
 
   TICK();
 
@@ -123,11 +141,32 @@ void e5()
 void e6()
 {
   SETUP();
-  fs_filesystem_cp(g_fs, FNAME_1MB, "/fs-30MB");
+  fs_filesystem_cp(g_fs, FNAME_30MB, "/fs-30MB");
 
   TICK();
 
   fs_filesystem_rm(g_fs, "/fs-30MB");
+
+  TOCK();
+  TEAR_DOWN();
+}
+
+void e7()
+{
+  char buf[121] = {0};
+  char dir[5] = {0};
+
+  SETUP();
+
+  for (int i = 0; i < 30; i++) { 
+    sprintf(dir, "/d%02d", i);
+    strncat(buf, dir, 4);
+    fs_filesystem_mkdir(g_fs, buf);
+  }
+
+  TICK();
+
+  fs_filesystem_rmdir(g_fs, "/d00");
 
   TOCK();
   TEAR_DOWN();
@@ -162,7 +201,7 @@ int main(int argc, char* argv[])
   e4();
   e5();
   e6();
-  /* e7(); */
+  e7();
   /* e8(); */
 
   return 0;
