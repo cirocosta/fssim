@@ -66,7 +66,6 @@ int fs_file_serialize_dir(fs_file_t* file, unsigned char* buf, int n)
 
   while (tmp) {
     offset = counter * FS_OFFSET_FILE_ENTRY;
-    LOGERR("tmp = %p", tmp);
     curr_file = (fs_file_t*)tmp->data;
 
     serialize_uint8_t(buf + offset, curr_file->attrs.is_directory);

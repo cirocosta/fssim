@@ -282,8 +282,9 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   char mtime_buf[FS_DATE_FORMAT_SIZE] = { 0 };
   char fsize_buf[FS_FSIZE_FORMAT_SIZE] = { 0 };
   unsigned argc = 0;
+  fs_llist_t* child = NULL;
   char** argv = fs_utils_splitpath(abspath, &argc);
-  fs_llist_t* child = _traverse_to_dir(fs, argv, argc);
+  _traverse_to_dir(fs, argv, argc);
 
   if (!fs->cwd) {
     fprintf(stderr, "\nDirectory `%s` not found.\n", abspath);
@@ -303,6 +304,8 @@ void fs_filesystem_ls(fs_filesystem_t* fs, const char* abspath, char* buf,
   written += snprintf(buf + written, n - written, FS_LS_FORMAT,
                       fs->cwd->attrs.is_directory == 1 ? 'd' : 'f', fsize_buf,
                       mtime_buf, "..");
+
+  child = fs->cwd->children;
 
   while (child) {
     fs_file_t* file = (fs_file_t*)child->data;

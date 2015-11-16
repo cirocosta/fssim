@@ -503,27 +503,52 @@ void test21()
   fs_filesystem_destroy(fs);
 }
 
+void test22()
+{
+  const char* expected = "d   4.0KB 1969-12-31 21:00 .         \n"
+                         "d   4.0KB 1969-12-31 21:00 ..        \n"
+                         "d   4.0KB 1969-12-31 21:00 hue       \n";
+  const unsigned BUFSIZE = FS_LS_FORMAT_SIZE * 3;
+  char* buf = calloc(BUFSIZE, sizeof(*buf));
+  PASSERT(buf, FS_ERR_MALLOC);
+
+  memset(buf, '\0', BUFSIZE);
+
+  fs_filesystem_t* fs = fs_filesystem_create(10);
+  fs_utils_fdelete(FS_TEST_FNAME);
+  fs_filesystem_mount(fs, FS_TEST_FNAME);
+  fs_filesystem_mkdir(fs, "/lol");
+  fs_filesystem_mkdir(fs, "/lol/hue");
+  fs_filesystem_ls(fs, "/lol", buf, BUFSIZE);
+
+  STRNCMP(buf, expected);
+
+  fs_filesystem_destroy(fs);
+  free(buf);
+}
+
 int main(int argc, char* argv[])
 {
-  /* TEST(test1, "creation and deletion"); */
-  /* TEST(test2, "mounting w/out previous mount"); */
-  /* TEST(test3, "ls - list empty root dir"); */
-  /* TEST(test4, "touch - creating a file in empty root"); */
-  /* TEST(test5, "superblock serialization"); */
-  /* TEST(test8, "ls - root w/ children"); */
-  /* TEST(test9, "find - check for file in current layer"); */
-  /* TEST(test10, "find revamped - recursive search"); */
-  /* TEST(test11, "rm - remove file"); */
-  /* TEST(test12, "rm - add and remove sole file"); */
-  /* TEST(test13, "mount - file persistence - single level"); */
-  /* TEST(test14, "cp - copy from real fs to sim - 1KB"); */
-  /* TEST(test15, "cp - copy from real fs to sim - 1MB"); */
-  /* TEST(test16, "cat which actually copies out to real fs"); */
-  /* TEST(test17, "dir - single level"); */
-  /* TEST(test18, "dir - multiple levels"); */
+  TEST(test1, "creation and deletion");
+  TEST(test2, "mounting w/out previous mount");
+  TEST(test3, "ls - list empty root dir");
+  TEST(test4, "touch - creating a file in empty root");
+  TEST(test5, "superblock serialization");
+  TEST(test8, "ls - root w/ children");
+  TEST(test9, "find - check for file in current layer");
+  TEST(test10, "find revamped - recursive search");
+  TEST(test11, "rm - remove file");
+  TEST(test12, "rm - add and remove sole file");
+  TEST(test13, "mount - file persistence - single level");
+  TEST(test14, "cp - copy from real fs to sim - 1KB");
+  TEST(test15, "cp - copy from real fs to sim - 1MB");
+  TEST(test16, "cat which actually copies out to real fs");
+  TEST(test17, "dir - single level");
+  TEST(test18, "dir - multiple levels");
   TEST(test19, "multiple `mkdir` && `rmdir`");
-  /* TEST(test20, "`df` display"); */
-  /* TEST(test21, "restore `fs` after `cp`"); */
+  TEST(test20, "`df` display");
+  TEST(test21, "restore `fs` after `cp`");
+  TEST(test22, "ls - nested fs");
 
   return 0;
 }

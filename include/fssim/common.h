@@ -94,7 +94,7 @@
   } while (0)
 
 #define STRNCMP(__a, __b)                                                      \
-  ASSERT(!strncmp(__a, __b, strlen(__b)), "`%s` != `%s`", __a, __b)
+  ASSERT(!strncmp(__a, __b, strlen(__b)), "\n`\n%s`\n != \n`\n%s`\n", __a, __b)
 
 #ifndef NDEBUG
 #define DASSERT(__cond, __msg, ...) ASSERT(__cond, __msg, #__VA_ARGS__)
