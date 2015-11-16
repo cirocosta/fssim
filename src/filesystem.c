@@ -318,31 +318,6 @@ fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
   return _filesystem_mkfile(fs, fname, FS_FILE_DIRECTORY);
 }
 
-int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
-{
-  int n = 0;
-  unsigned argc = 0;
-  char** argv = fs_utils_splitpath(path, &argc);
-  fs_llist_t* file = _traverse_to_file(fs, argv, argc);
-
-  if (!file) {
-    FREE_ARR(argv, argc);
-    return 0;
-  }
-
-  fs->cwd->children = fs_llist_remove(fs->cwd->children, file);
-  fs_llist_destroy(file, fs_file_destructor);
-  fs->cwd->children_count--;
-
-  if (!fs->cwd->children_count)
-    fs->cwd->children = NULL;
-
-  fs_filesystem_persist_cwd(fs);
-  FREE_ARR(argv, argc);
-
-  return 1;
-}
-
 fs_file_t* fs_filesystem_cp(fs_filesystem_t* fs, const char* src,
                             const char* dest)
 {
@@ -450,6 +425,37 @@ void fs_filesystem_cat(fs_filesystem_t* fs, const char* src, int fd)
   FREE_ARR(argv, argc);
 }
 
+static void _filesystem_rmfile(fs_filesystem_t* fs, fs_llist_t* file)
+{
+  fs_fat_removefile(fs->fat, ((fs_file_t*)file->data)->fblock);
+  fs->cwd->children = fs_llist_remove(fs->cwd->children, file);
+  fs_llist_destroy(file, fs_file_destructor);
+  file = NULL;
+
+  fs->cwd->children_count--;
+  if (!fs->cwd->children_count)
+    fs->cwd->children = NULL;
+}
+
+int fs_filesystem_rm(fs_filesystem_t* fs, const char* path)
+{
+  int n = 0;
+  unsigned argc = 0;
+  char** argv = fs_utils_splitpath(path, &argc);
+  fs_llist_t* file = _traverse_to_file(fs, argv, argc);
+
+  if (!file) {
+    FREE_ARR(argv, argc);
+    return 0;
+  }
+
+  _filesystem_rmfile(fs, file);
+  fs_filesystem_persist_cwd(fs);
+  FREE_ARR(argv, argc);
+
+  return 1;
+}
+
 int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
 {
   int n = 0;
@@ -472,15 +478,7 @@ int fs_filesystem_rmdir(fs_filesystem_t* fs, const char* path)
     return 0;
   }
 
-  fs->cwd->children = fs_llist_remove(fs->cwd->children, dir);
-  fs_llist_destroy(dir, fs_file_destructor);
-  dir = NULL;
-  file = NULL;
-
-  fs->cwd->children_count--;
-  if (!fs->cwd->children_count)
-    fs->cwd->children = NULL;
-
+  _filesystem_rmfile(fs, dir);
   fs_filesystem_persist_cwd(fs);
   FREE_ARR(argv, argc);
 
