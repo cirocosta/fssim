@@ -17,10 +17,39 @@ fssim/build%  make -j5
 fssim/build%  ./src/fssim
 ```
 
-Scripts para executar os experimentos foram previamente preparados. Para executá-los basta criar os arquivos (de 10MB, 30MB e 50MB) necessários ao teste previamente executando o script `create-files`:
+Scripts para executar os experimentos foram previamente preparados. Para executá-los basta criar os arquivos (de 10MB, 30MB e 50MB) necessários ao teste previamente executando o script `create-files`. Segue um exemplo:
 
 ```
 fssim%        ./experiments/create-files.sh
 fssim%        cd build 
 fssim/build%  ./experiments/experiments 
+
+USAGE:
+   $ ./experiments <state>
+
+STATES
+   1.    Empty filesystem
+   2.    Filesystem w/ 10MB in use
+   3.    Filesystem w/ 50MB in use
+
+EXPERIMENTS
+   1.    Copy of a single 1MB file into '/'
+   2.    Copy of a single 10MB file into '/'
+   3.    Copy of a single 30MB file into '/'
+   4.    Removal of a single 1MB file into '/'
+   5.    Removal of a single 10MB file into '/'
+   6.    Removal of a single 30MB file into '/'
+   7.    Removal of an entire 30-level deep tree of
+         directories consisting of a single directory
+   8.    Removal of an entire 30-level deep tree of
+         directories consisting of a lots and lots of files
+
+OUTPUT
+   The ouput consists of a CSV w/out header:
+     <exp_name>,<exp_time>
+
+EXAMPLE:
+   $ ./experiments 2
+
+fssim/build% seq 30 | xargs -I{} ./experiments/experiments 1
 ```

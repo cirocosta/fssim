@@ -158,10 +158,9 @@ void e7()
 
   SETUP();
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 30; i++) {
     sprintf(dir, "/d%02d", i);
     strncat(buf, dir, 4);
-    LOGERR("mkdir `%s`", buf);
     fs_filesystem_mkdir(g_fs, buf);
   }
 
@@ -192,7 +191,7 @@ void e8()
     strncpy(buf_files, buf_dirs, 121);
     n = strlen(buf_dirs);
 
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < 100; j++) {
       sprintf(file, "/f%02d", j);
       strncpy(buf_files + n, file, 5);
       fs_filesystem_touch(g_fs, buf_files);
@@ -201,10 +200,9 @@ void e8()
   }
 
   TICK();
-
   fs_filesystem_rmdir(g_fs, "/d00");
-
   TOCK();
+
   TEAR_DOWN();
 }
 
@@ -231,14 +229,14 @@ int main(int argc, char* argv[])
       exit(1);
   }
 
-  /* e1(); */
-  /* e2(); */
-  /* e3(); */
-  /* e4(); */
-  /* e5(); */
-  /* e6(); */
+  e1();
+  e2();
+  e3();
+  e4();
+  e5();
+  e6();
   e7();
-  /* e8(); */
+  e8();
 
   return 0;
 }

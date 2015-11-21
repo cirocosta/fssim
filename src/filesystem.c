@@ -265,8 +265,6 @@ static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
 
   _traverse_to_file(fs, argv, argc);
 
-  LOGERR("cwd = %s", fs->cwd->attrs.fname);
-
   fs_file_t* f = fs_file_create(argv[argc - 1], type, fs->cwd);
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
@@ -333,7 +331,6 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 
 fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
 {
-  LOGERR("mkdir `%s`", fname);
   return _filesystem_mkfile(fs, fname, FS_FILE_DIRECTORY);
 }
 
