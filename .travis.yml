@@ -13,7 +13,6 @@ addons:
     packages:
       - cmake
       - gcc-4.9
-      - g++-4.9
       - clang-3.6
       - valgrind
 
@@ -24,7 +23,6 @@ env:
 install:
   - export TZ='America/Sao_Paulo'
   - if [ "$CC" = "clang" ]; then export CC="clang-3.6"; fi
-  - if [ "$CC" = "gcc" ]; then export CC="gcc-4.9"; fi
   - export CTEST_OUTPUT_ON_FAILURE=1
   - env | sort
 

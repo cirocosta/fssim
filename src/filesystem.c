@@ -162,6 +162,8 @@ void fs_filesystem_load(fs_filesystem_t* fs)
 
 static fs_llist_t* _find_file_in_layer(fs_llist_t* child, const char* fname)
 {
+  ASSERT(child != NULL, "");
+
   while (child) {
     if (!strcmp(((fs_file_t*)child->data)->attrs.fname, fname))
       return child;
@@ -194,36 +196,55 @@ static fs_llist_t* _traverse_to_dir(fs_filesystem_t* fs, char** argv,
   return f;
 }
 
+//  - if a path to the last component exist:
+//    - set fs->cwd to the location
+//    - return the file (llist) if found
+//    - return the directory where the file does not exist
 static fs_llist_t* _traverse_to_file(fs_filesystem_t* fs, char** argv,
                                      unsigned argc)
 {
-  fs_llist_t* f = fs->root->children;
-  fs_llist_t* f2 = NULL;
-  fs_file_t* file = NULL;
+  fs_llist_t root_f = {.next = NULL, .data = fs->root };
+  fs_llist_t* f = &root_f;
   int i = 0;
 
-  for (; i < argc - 1; i++) // '[/others ...]/last'
-    if (!(f = _find_file_in_layer(f, argv[i])))
+  fs->cwd = fs->root;
+
+  for (; i < argc - 1; i++) { // '[/others ...]/last'
+    f = ((fs_file_t*)f->data)->children;
+
+    if (!f)
       return NULL;
 
-  // last component:
-  //  - return the file if found
-  //  - return the directory where the file does not exist
-  if (f && argc > 1)
-    file = (fs_file_t*)f->data;
+    if (!(f = _find_file_in_layer(f, argv[i])))
+      return NULL;
+  }
 
-  fs->cwd = file && file->attrs.is_directory ? file : fs->root;
+  // if we got somewhere
+  if (argc > 1) {
+    fs->cwd = (fs_file_t*)f->data;
+  }
 
-  if (!(f2 = _find_file_in_layer(f, argv[i])))
-    return f;
+  // last component - check if we can find it
+  if (f && argc > 1) {
+    f = ((fs_file_t*)f->data)->children;
+    if (!f)
+      return NULL;
 
-  return f2;
+    return _find_file_in_layer(f, argv[i]);
+  }
+
+  if (fs->root->children)
+    return _find_file_in_layer(fs->root->children, argv[i]);
+  return NULL;
 }
 
 // DFS
 fs_file_t* fs_filesystem_find(fs_filesystem_t* fs, const char* root,
                               const char* fname)
 {
+  if (!fs->root->children)
+    return NULL;
+
   unsigned argc = 0;
   char** argv = fs_utils_splitpath(root, &argc);
 
@@ -242,19 +263,16 @@ static fs_file_t* _filesystem_mkfile(fs_filesystem_t* fs, const char* fname,
   unsigned argc = 0;
   char** argv = fs_utils_splitpath(fname, &argc);
 
-  // FIXME what about passing argv and argc to 'traverse'?
-  // FIXME verify if file exist
-  fs_llist_t* dir = _traverse_to_file(fs, argv, argc);
-  fs_file_t* f = fs_file_create(argv[argc - 1], type, fs->cwd);
+  _traverse_to_file(fs, argv, argc);
 
+  LOGERR("cwd = %s", fs->cwd->attrs.fname);
+
+  fs_file_t* f = fs_file_create(argv[argc - 1], type, fs->cwd);
   fs_file_addchild(fs->cwd, f);
   f->parent = fs->cwd;
   f->fblock = fs_fat_addfile(fs->fat);
 
-  // persist updated directory entry
-  // compute the correct position and write over
   fs_filesystem_persist_cwd(fs);
-
   FREE_ARR(argv, argc);
 
   return f;
@@ -315,6 +333,7 @@ fs_file_t* fs_filesystem_touch(fs_filesystem_t* fs, const char* fname)
 
 fs_file_t* fs_filesystem_mkdir(fs_filesystem_t* fs, const char* fname)
 {
+  LOGERR("mkdir `%s`", fname);
   return _filesystem_mkfile(fs, fname, FS_FILE_DIRECTORY);
 }
 

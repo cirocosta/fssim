@@ -1,0 +1,26 @@
+----------------------------
+fssim - Filesystem Simulator
+---------------------------
+  - Ciro S. Costa
+  - N USP: 8071488
+  - EP3 - SO
+
+Para compilar o programa é necessário que seja previamente instalado o `cmake` (>= 2.8.11) e o `clang` (>= 3.5) (apesar de funcionar com gcc >= 4.9).
+Tendo as dependencias, basta executar o `cmake` uma vez para gerar os arquivos de compilação e posteriormente o `make` para de fato compilar:
+
+```
+fssim%        mkdir build
+fssim%        cd build 
+fssim/build%  cmake .. 
+
+fssim/build%  make -j5
+fssim/build%  ./src/fssim
+```
+
+Scripts para executar os experimentos foram previamente preparados. Para executá-los basta criar os arquivos (de 10MB, 30MB e 50MB) necessários ao teste previamente executando o script `create-files`:
+
+```
+fssim%        ./experiments/create-files.sh
+fssim%        cd build 
+fssim/build%  ./experiments/experiments 
+```

@@ -444,10 +444,9 @@ void test19()
   ASSERT(tmp_dir->children_count == 2, "");
   fs_filesystem_rmdir(fs, "/tmp");
 
-
   //         _______root
-  //         |       
-  //        hue          
+  //         |
+  //        hue
   ASSERT(fs->root->children_count == 1, "");
   ASSERT(fs_filesystem_find(fs, "/", "tmp") == NULL, "");
   ASSERT(fs_filesystem_find(fs, "/", "br") == NULL, "");
@@ -547,6 +546,8 @@ void test23()
   fs_filesystem_touch(fs, "/d00/f98");
   fs_filesystem_touch(fs, "/d00/f97");
   fs_filesystem_mkdir(fs, "/d00/d01");
+  LOGERR("%s", ((fs_file_t*)(((fs_file_t*)fs->root->children->data)
+                                 ->children->data))->attrs.fname);
   fs_filesystem_touch(fs, "/d00/d01/f02");
   fs_filesystem_mkdir(fs, "/d00/d01/d02");
   fs_filesystem_touch(fs, "/d00/d01/d02/f03");
@@ -561,12 +562,13 @@ void test23()
   ASSERT(fs_filesystem_rmdir(fs, "/d00"), "");
   fs_fsinfo_calculate(&info, fs->root);
 
+  ASSERT(fs->root->children_count == 0, "actually, root children_rount: %d",
+         fs->root->children_count);
   ASSERT(info.directories == 0, "actually, now: %d", info.directories);
-  ASSERT(info.files == 0, "actually, now:: %d", info.files);
+  ASSERT(info.files == 0, "actually, now: %d", info.files);
 
   fs_filesystem_destroy(fs);
 }
-
 
 int main(int argc, char* argv[])
 {
